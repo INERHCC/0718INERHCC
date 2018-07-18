@@ -1,0 +1,1109 @@
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/05/16 15:38:52 Page 1
+Aggregation Program for the GTAP9 Database
+C o m p i l a t i o n
+
+
+   2   
+   6   
+INCLUDE    d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/05/16 15:38:52 Page 2
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+  10   
+  12   
+  13  scalar nd       Number of decimals /0/;
+  14  abort$(nd<>round(nd)) "Number of decimals must be an integer";
+  15   
+  16  *--------------------for eppa---------------------------------------------------
+  17  *$if not set ds $set ds gsd
+  18  *$if not set yr $set yr 07
+  19  *$if not set datadir $set datadir "..\data%yr%\"
+  22  *-------------------end of eppa--------------------------------------------------
+  23   
+  24  set     g(*)    Goods plus C and G;
+GDXIN   d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\filter11_001.gdx
+--- LOAD  g = 3:g
+  28   
+  29  set     i(g)    Goods
+  30          f(*)    Factors;
+--- LOAD  f = 5:f
+--- LOAD  i = 4:i
+  33  set r(*)        Regions;
+--- LOAD  r = 6:r
+  35   
+  36   
+  37  set     rnum(r) Numeraire region,
+  38          sf(f)   Sluggish primary factors (sector-specific),
+  39          mf(f)   Mobile primary factors;
+  40   
+  41  alias (r,s), (i,j);
+  42   
+  43  display r;
+  44  parameters
+  45          vfm(f,g,r)      Endowments - Firms' purchases at market prices,
+  46          vdfm(i,g,r)     Intermediates - firms' domestic purchases at market prices,
+  47          vifm(i,g,r)     Intermediates - firms' imports at market prices,
+  48          vxmd(i,r,s)     Trade - bilateral exports at market prices,
+  49          vst(i,r)        Trade - exports for international transportation
+  51          vtwr(i,j,r,s)   Trade - Margins for international transportation at world prices;
+  52   
+--- LOAD  vfm = 12:vfm
+--- LOAD  vdfm = 13:vdfm
+--- LOAD  vifm = 14:vifm
+--- LOAD  vxmd = 15:vxmd
+--- LOAD  vst = 16:vst
+--- LOAD  vtwr = 17:vtwr
+  55   
+  56  if (nd>0,
+  57          vfm(f,g,r) = vfm(f,g,r)$round(vfm(f,g,r),nd);
+  58          vdfm(i,g,r) = vdfm(i,g,r)$round(vdfm(i,g,r),nd);
+  59          vifm(i,g,r) = vifm(i,g,r)$round(vifm(i,g,r),nd);
+  60          vxmd(i,r,s) = vxmd(i,r,s)$round(vxmd(i,r,s),nd);
+  61          vst(i,r) = vst(i,r)$round(vst(i,r),nd);
+  62          vtwr(i,j,r,s) = vtwr(i,j,r,s)$round(vtwr(i,j,r,s),nd);
+  64  );
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/05/16 15:38:52 Page 3
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+  65   
+  66  parameter
+  67          evt(i,r,r)      Volume of energy trade (mtoe),
+  68          evd(i,g,r)      Domestic energy use (mtoe),
+  69          evi(i,g,r)      Imported energy use (mtoe),
+  70          eco2d(i,g,r)    CO2 emissions in domestic fuels - Mt CO2",
+  71          eco2i(i,g,r)    CO2 emissions in foreign fuels - Mt CO2";
+  72   
+--- LOAD  evd = 19:evd
+--- LOAD  evi = 20:evi
+--- LOAD  evt = 18:evt
+--- LOAD  eco2d = 21:eco2d
+--- LOAD  eco2i = 22:eco2i
+  74  if (nd>0,
+  75          evt(i,r,s)  = evt(i,r,s)$round(evt(i,r,s), nd);
+  76          evd(i,g,r) = evd(i,g,r)$round(evd(i,g,r), nd);
+  77          evi(i,g,r) = evi(i,g,r)$round(evi(i,g,r), nd);
+  78          eco2d(i,g,r) = eco2d(i,g,r)$round(eco2d(i,g,r), nd);
+  79          eco2i(i,g,r) = eco2i(i,g,r)$round(eco2i(i,g,r), nd);
+  80  );
+  81   
+  82  parameter
+  83          rto(g,r)        Output (or income) subsidy rates
+  84          rtf(f,g,r)      Primary factor and commodity rates taxes
+  85          rtfd(i,g,r)     Firms domestic tax rates
+  86          rtfi(i,g,r)     Firms' import tax rates
+  87          rtxs(i,r,s)     Export subsidy rates
+  89          rtms(i,r,s)     Import taxes rates;
+  90   
+--- LOAD  rto = 23:rto
+--- LOAD  rtf = 24:rtf
+--- LOAD  rtfd = 25:rtfd
+--- LOAD  rtfi = 26:rtfi
+--- LOAD  rtxs = 27:rtxs
+--- LOAD  rtms = 28:rtms
+  93   
+  94  if (nd>0,
+  95          rto(g,r) = rto(g,r)$round(rto(g,r),nd);
+  96          rtf(f,g,r) = rtf(f,g,r)$round(rtf(f,g,r),nd);
+  97          rtfd(i,g,r) = rtfd(i,g,r)$round(rtfd(i,g,r),nd);
+  98          rtfi(i,g,r) = rtfi(i,g,r)$round(rtfi(i,g,r),nd);
+  99          rtxs(i,r,s) = rtxs(i,r,s)$round(rtxs(i,r,s),nd);
+ 100          rtms(i,r,s) = rtms(i,r,s)$round(rtms(i,r,s),nd);
+ 102  );
+ 103  parameter
+ 104          esubd(i)        Elasticity of substitution (M versus D),
+ 105          esubva(g)       Elasticity of substitution between factors
+ 106          esubm(i)        Intra-import elasticity of substitution,
+ 107          etrae(f)        Elasticity of transformation,
+ 108          eta(i,r)        Income elasticity of demand,
+ 109          epsilon(i,r)    Own-price elasticity of demand;
+ 110   
+--- LOAD  esubd = 29:esubd
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/05/16 15:38:52 Page 4
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+--- LOAD  esubva = 30:esubva
+--- LOAD  esubm = 31:esubm
+--- LOAD  etrae = 32:etrae
+--- LOAD  eta = 33:eta
+--- LOAD  epsilon = 34:epsilon
+ 112   
+ 113  *       Declare some intermediate arrays which are required to
+ 114  *       evaluate tax rates:
+ 115   
+ 116  parameter       vdm(g,r)        Aggregate demand for domestic output,
+ 117                  vom(g,r)        Total supply at market prices;
+ 118   
+ 119  vdm(i,r) = sum(g, vdfm(i,g,r));
+ 120  vom(i,r) = vdm(i,r) + sum(s, vxmd(i,r,s)) + vst(i,r);
+ 121   
+ 122  parameter
+ 123          rtf0(f,g,r)     Primary factor and commodity rates taxes
+ 124          rtfd0(i,g,r)    Firms domestic tax rates
+ 125          rtfi0(i,g,r)    Firms' import tax rates
+ 126          rtxs0(i,r,s)    Export subsidy rates
+ 127          rtms0(i,r,s)    Import taxes rates;
+ 128   
+ 129  rtf0(f,g,r) = rtf(f,g,r);
+ 130  rtfd0(i,g,r) = rtfd(i,g,r);
+ 131  rtfi0(i,g,r) = rtfi(i,g,r);
+ 132  rtxs0(i,r,s) = rtxs(i,r,s);
+ 133  rtms0(i,r,s) = rtms(i,r,s);
+ 134   
+ 135  parameter       pvxmd(i,s,r)    Import price (power of benchmark tariff)
+ 136                  pvtwr(i,s,r)    Import price for transport services;
+ 137   
+ 138  pvxmd(i,s,r) = (1+rtms0(i,s,r)) * (1-rtxs0(i,s,r));
+ 139  pvtwr(i,s,r) = 1+rtms0(i,s,r);
+ 140   
+ 141  parameter
+ 142          vtw(j)          Aggregate international transportation services,
+ 143          vpm(r)          Aggregate private demand,
+ 144          vgm(r)          Aggregate public demand,
+ 145          vim(i,r)        Aggregate imports,
+ 146          evom(f,r)       Aggregate factor endowment at market prices,
+ 147          vb(*)           Current account balance;
+ 148   
+ 149  vtw(j) = sum(r, vst(j,r));
+ 150  vom("c",r) = sum(i, vdfm(i,"c",r)*(1+rtfd0(i,"c",r)) + vifm(i,"c",r)*(1+rtfi0(i,"c",r)))/(1-rto("c",r));
+ 151  vom("g",r) = sum(i, vdfm(i,"g",r)*(1+rtfd0(i,"g",r)) + vifm(i,"g",r)*(1+rtfi0(i,"g",r)))/(1-rto("g",r));
+ 152  vom("i",r) = sum(i, vdfm(i,"i",r)*(1+rtfd0(i,"i",r)) + vifm(i,"i",r)*(1+rtfi0(i,"i",r)))/(1-rto("i",r));
+ 153   
+ 154  vdm("c",r) = vom("c",r);
+ 155  vdm("g",r) = vom("g",r);
+ 156  vim(i,r) =  sum(g, vifm(i,g,r));
+ 157  evom(f,r) = sum(g, vfm(f,g,r));
+ 158  vb(r) = vom("c",r) + vom("g",r) + vom("i",r)
+ 159          - sum(f, evom(f,r))
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/05/16 15:38:52 Page 5
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 160          - sum(g,  vom(g,r)*rto(g,r))
+ 161          - sum(g,  sum(i, vdfm(i,g,r)*rtfd(i,g,r) + vifm(i,g,r)*rtfi(i,g,r)))
+ 162          - sum(g,  sum(f, vfm(f,g,r)*rtf(f,g,r)))
+ 163          - sum((i,s), rtms(i,s,r) *  (vxmd(i,s,r) * (1-rtxs(i,s,r)) + sum(j,vtwr(j,i,s,r))))
+ 164          + sum((i,s), rtxs(i,r,s) * vxmd(i,r,s));
+ 165   
+ 166  vb("chksum") = sum(r, vb(r));
+ 167  display vb;
+ 168   
+ 169  *       Determine which factors are sector-specific
+ 170   
+ 171  mf(f) = yes$(1/etrae(f)=0);
+ 172  sf(f) = yes$(1/etrae(f)>0);
+ 173  display mf,sf;
+ 174   
+ 175  parameter       mprofit Zero profit for m,
+ 176                  yprofit Zero profit for y;
+ 177   
+ 178  mprofit(i,r) = vim(i,r) - sum(s, pvxmd(i,s,r)*vxmd(i,s,r)+sum(j, vtwr(j,i,s,r))*pvtwr(i,s,r));
+ 179  mprofit(i,r) = round(mprofit(i,r),5);
+ 180  display mprofit;
+ 181   
+ 182  yprofit(g,r) = vom(g,r)*(1-rto(g,r))
+ 183          - sum(i, vdfm(i,g,r)*(1+rtfd0(i,g,r))
+ 184                 + vifm(i,g,r)*(1+rtfi0(i,g,r)))
+ 185          - sum(f, vfm(f,g,r)*(1+rtf0(f,g,r)));
+ 186   
+ 187  yprofit(g,r) = round(yprofit(g,r),6)
+ 188  display yprofit;
+ 189   
+ 190  *       Define a numeraire region for denominating international
+ 191  *       transfers:
+ 192   
+ 193  rnum(r) = yes$(vom("c",r)=smax(s,vom("c",s)));
+ 194  display rnum;
+ 195   
+ 196  *---------only for eppa----------------------------------------------------------------------------
+ 197   
+ 198   
+ 199  set     ghg     GREEN HOUSE GAS POLLUTANTS
+ 200          bt      BACKSTOP TECHNOLOGIES
+ 201          fa      for aggregate fixed factor and armington goods (prod d)
+ 202          layer   CES NESTING HIERARCHY
+ 203          x       Homogenous goods
+ 204          e(i)    ENERGY COMMODITIES;
+ 205   
+ 206  $load ghg bt fa layer x e
+****           $492,492,492$492,492,492
+**** LINE    198 INCLUDE     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+**** LINE      8 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+ 207   
+ 208  parameter
+ 209  SELAS(*,layer,r)        INITIAL SUBSTITUTION ELASTICITY MATRIX
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/05/16 15:38:52 Page 6
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 210  esup(*,r)               fixed factor substitution elasticity
+ 211  delas                   Final demand elasticity between energy and non-energy composites
+ 212  sigtrn                  Elasticity between transport consumption and other consumption in final demand
+ 213  d_elas(r)               top final demand substitution elasticity
+ 214  d_elase(r)              substitution among energy
+ 215  d_elaso(r)              substitution among otherind and enerint
+ 216  d_elasa(r)              substitution between agriculure and the rest
+ 217  ESUBE(*,r)              Elasticity of substitution between energy inputs
+ 218  sigc                    top level elasticity between energy consumption and gases
+ 219  siggv                   Elasticity of substitution for ghg in vintaged sectors
+ 220  sigg                    Elasticity of substitution for ghg
+ 221  sigg0                   Elasticity of substitution for ghg
+ 222  sigu                    top level transformation elasticity between production and urban gases
+ 223  pnesta                  production sectors nest a substitution elasticity
+ 224  enesta                  energy input to electricity sector nest a substitution elasticity
+ 225  tnesta                  hh transport substitution elasticity between roil and the rest of own-supplied transport
+ 226  tnests                  hh transport top nest elasticity (between purchased and own-supplied)
+ 227  s_bc(*,r)               sectoral elasticity of substitution for black and organic carbon
+ 228  bsigma(r)               Elasticity of substitution for biomass generation
+ 229  boilsig(r)              Fixed factor elasticity for 2nd gen bio-oil
+ 230  boilffg(r)              Fixed factor elasticity for 1st gen bio-oil
+ 231  etag(r,*)               income elasticity of g(redefined??)
+ 232  ***vdfmplusvifm_(irh,iii,rrr)  base year vdfm plus vifm
+ 233  **price_(irh,rrr,t)     Armington price with Reimer-Hertel sectors
+ 234  ***finalc_                      HH aggregated final consumption expenditure in billion US$
+ 235  **finalcp_              per capita HH aggregate final consumption expenditure in thousand US$ divided by 100
+ 236  **u_(rrr,t)             AIDADS utility level
+ 237  ***what_(irh,rrr,t)     w hat
+ 238  ***xhat_(irh,rrr,t)     x hat
+ 239  ***phia_(irh,rrr,t)     phi in the AIDADS system
+ 240  ***mbs_(irh,rrr,t)      marginal budget share
+ 241  ***elas_(irh,rrr,t)     income elasticity with Reimer-Hertel sector
+ 242  ***elastot_(irh,rrr,t)  elas converted from individual to aggregated level
+ 243  ***tha_(rrr,t)          correction for income elasticities of other sectors
+ 244  **alpha(irh)
+ 245  **beta(irh)
+ 246  **gamma(irh)
+ 247  **price07_e4_(irh,rrr)  base year real price levels from EPPA4 with base year 1997
+ 248  usda(r,*)               USDA ICP income elasticities for 2005
+ 249  wsigma(r)               Elasticity of substitution for wind generation
+ 250  bsf(*,r)                backstop fixed factor substitution elasticity
+ 251   
+ 252  efe(e,*,r)              Elasticity of substitution for ghg and energy-fe.tl (prod d)
+ 253  ene(*,r)                Elasticity of substitution for non-energy product-ne (prod d&z&dv)
+ 254  efa(fa,e,r)             Elasticity of substitution for fixed factor and armington goods (prod d)
+ 255  ****sigma(r)            Elasticity of substitution for nuclear energy
+ 256  neta(r)                 parameter used to calculate sigma-nuclear elasticity
+ 257  ****hsigma(r)           Elasticity of substitution for hydroelectric
+ 258  heta(r)                 parameter used to calculate hsigma-hydroelectric elasticity
+ 259  esubi(r)                Elasticity of substitution for invesment
+ 260  esb(r)                  Elasticity of substitution for household transport
+ 261  eyt                     Elasticity of substitution for international transport
+ 262  eeid(e,*,r)             Elasticity of substitution for conventional intermediate energy demand
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/05/16 15:38:52 Page 7
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 263  eedf(e,r)               Elasticity of substitution for conventional final energy demand
+ 264  etedf(e,r)              Elasticity of substitution for conventional final energy demand -- hh transport
+ 265  eeid_ghg(e,*,r)         Elasticity of substitution for energy demand inclusive of ghg -- intermediate
+ 266  efd_ghg(e,*,r)          Elasticity of substitution for energy demand inclusive of ghg -- final
+ 267  etefd_ghg(e,*,r)        Elasticity of substitution for energy demand inclusive of ghg -- hh transport
+ 268   
+ 269  err(r)                  Elasticity of substitution for international tansport and import-rr.tl(prod m)
+ 270  ehomm(x,r)              Elasticity of substitution for net imports of homogenous goods
+ 271  ehomx(x,r)              Elasticity of substitution for net exports of homogenous goods
+ 272  ebiom_f(r)              Elasticity of substitution for net imports of bio-oil
+ 273  ebiom_i(*,r)            Elasticity of substitution for net imports of bio-oil
+ 274  ebiox(r)                Elasticity of substitution for net exports of bio-oil
+ 275  eed(r)                  Elasticity of substitution for energy and dwelling goods(prod Z)
+ 276  ew(r)                   Elasticity of substitution for welfare
+ 277  edv(r)                  Elasticity of substitution for dv's other input(a)
+ 278   
+ 279  ecva(bt,r)              Elasticity of substitution for cva (prod eb)
+ 280  efva(bt,r)              Elasticity of substitution for fva (prod eb)
+ 281  egva(bt,r)              Elasticity of substitution for gva (prod eb)
+ 282  etdva(bt,r)             Elasticity of substitution for tdva (prod eb)
+ 283  egtd(bt,r)              Elasticity of substitution for cva (prod eb)
+ 284  esva(bt,r)              Elasticity of substitution for sva (prod eb)
+ 285  eeban(r)                Elasticity of substitution for eb-adv-nucl
+ 286  eva(bt,r)               Elasticity of substitution for va (prod eb)
+ 287   
+ 288  ewiput(r)               Elasticity of substitution for eb-wind input-b
+ 289  ebioput(r)              Elasticity of substitution for eb-bioe input-b
+ 290  esiput(r)               Elasticity of substitution for eb-solar input-a
+ 291  ebva(r)                 Elasticity of substitution for eb-windbio input bio cap&lab-b
+ 292  egb(r)                  Elasticity of substitution for eb-windgas input gas cap&lab-b
+ 293  egc(r)                  Elasticity of substitution for eb-windgas input for carbon-c
+ 294  egf(r)                  Elasticity of substitution for eb-windgas input for carbon&va of gas-f
+ 295  eob(r)                  Elasticity of substitution for eb-biooil input armington goods-b
+ 296  **** eb still have lots parameters not included
+ 297   
+ 298  eebv(r)                 Elasticity of substitution for vintaged backstop production
+ 299  eeqco2(r)               Elasticity of substitution for transforming carbon rights to ghg rights -- regional or regional to international
+ 300  eeqghg(ghg,r)           Elasticity of substitution for transforming ghg rights to carbon rights -- regional or regional to international
+ 301  ;
+ 302   
+ 303  * Elasticities between non-elec and elec in cosumption, investment and
+ 304  * government.
+ 305   
+ 306  SCALARS
+ 307          NOEEC
+ 308          NOEEI
+ 309          NOEEG
+ 310          ESUBG Elasticity in government demand ;
+ 311   
+ 312  $load SELAS, esup,delas,sigtrn,d_elas,ESUBE,
+****            $492  $492  $492   $492   $492  $492
+**** LINE    304 INCLUDE     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+**** LINE      8 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/05/16 15:38:52 Page 8
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 313  $load sigu,pnesta,enesta,
+****           $492   $492   $492
+**** LINE    305 INCLUDE     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+**** LINE      8 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+ 314  $load ene,esubi,eyt,
+****          $492  $492$492
+**** LINE    306 INCLUDE     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+**** LINE      8 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+ 315  $load err,eed,ew,
+****          $492$492,492
+**** LINE    307 INCLUDE     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+**** LINE      8 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+ 316   
+ 317  $load ESUBG
+****            $492
+**** LINE    309 INCLUDE     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+**** LINE      8 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+ 318  *$load SELAS, esup,delas,sigtrn,        d_elas, d_elase,d_elaso,d_elasa,ESUBE,sigc,siggv,sigg,
+ 319  *$load sigg0,sigu,pnesta,enesta,        tnesta, tnests, s_bc,bsigma,boilsig,boilffg,etag,usda,wsigma,bsf,
+ 320  *$load efe,ene,efa,neta,heta,esubi,esb,eyt,eeid,eedf,etedf,eeid_ghg,
+ 321  *$load efd_ghg,etefd_ghg,err,ehomm,ehomx,ebiom_f,ebiom_i,ebiox,eed,ew,edv,ecva,efva,egva,etdva,egtd,
+ 322  *$load esva,eeban,eva,ewiput,ebioput,esiput,ebva,egb,egc,
+ 323  *$load egf,eob,eebv, eeqco2,  eeqghg,NOEEC,NOEEI,NOEEG,ESUBG
+ 324   
+ 325  set con(g)  subset-consumption sector /c/
+ 326      ec(i)   Energy goods
+ 327                  /
+ 328                  coal    Coal
+****                     $170
+**** LINE    320 INCLUDE     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+**** LINE      8 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+ 329                  oil     Crude oil
+ 330                  gas     Natural gas
+ 331                  roil    Refined oil products
+****                     $170
+**** LINE    323 INCLUDE     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+**** LINE      8 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+ 332                  elec    Electricity
+****                     $170
+**** LINE    324 INCLUDE     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+**** LINE      8 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+ 333                  /;
+ 334  set     GI goverment and investment                /i, g/;
+ 335  SET     NE NON-ENERGY COMMODITIES                  /crop, live, fors, food, EINT, OTHR, serv, tran, dwe/;
+ 336  set     nend non-energy commodities excluding dwe /crop, live, fors, food, EINT, OTHR, serv, tran/;
+ 337  set     dwe  ownership of dwellings               /dwe/;
+ 338   
+ 339   
+ 340  SET     ENOE NON-ELEC ENERGY COMMODITIES           /COAL, OIL, GAS, ROIL/;
+ 341  SET     ELEC ELEC ENERGY COMMODITIES               /ELEC/;
+ 342  *SET    KSI(I) CAPITAL-SPECIFIC INDUSTRIES /COAL, OIL, GAS, ROIL, ELEC, EINT/;
+ 343  *SET     X(I) Homogenous goods /OIL/;
+ 344  *SET     X(I) Homogenous goods /OIL, GAS/;
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/05/16 15:38:52 Page 9
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 345  *SET    CGD(I) /CGD/;
+ 346  *SET     OIL(I) OIL /OIL/;
+ 347  *SET     GAS(I) GAS /GAS/;
+ 348  *set    roil(i) /roil/;
+ 349  *set    coal(i) /coal/;
+ 350  *set    oil_col(enoe) /roil, coal/;
+ 351  *set    refo(e) /roil/;
+ 352  SET     AGRI Agriculture /crop, live, fors/,
+ 353          EINT Energy intensive /eint/;
+ 354  *SET    TRANSFUEL(I)    SECTOR USING FUEL AS TRASNPORTATION /CROP, SERV, TRAN/;
+ 355  SET     AENOE /COAL, OIL, GAS, ROIL, crop, live, fors, ELEC, EINT/;
+ 356  SET     NAENOE /FOOD, OTHR, serv, tran, dwe/;
+ 357  *SET    VEHIFUELP(E) /ROIL/;
+ 358  *SET            OTE(NE) /EINT, OTHR/;
+ 359  *SET            AGDEV(R) Agri-consumer developing countries /CHN, IND, REA, BRA, AFR/;
+ 360   
+ 361  * VJK (LUC)
+ 362   
+ 363  * LUC: Land use categories
+ 364   
+ 365   
+ 366   
+ 367  parameter       esub(g)         Top-level elasticity indemand /c 1/
+ 368                  voam(i,g,r)     value of armington goods at biginning
+ 369                  w0(r)           utility at biginning
+ 370                  rto0(g,r)       Commodity rates taxes at biginning
+ 371                  epslond(i,g,r)  co2-energy transform coeffiecient(Gton-Mtoe)
+ 372                  epsloni(i,g,r)  co2-energy transform coeffiecient
+ 373                  epslon(i,g,r)   co2-energy transform coeffiecient
+ 374                  eco2(i,g,r)     the total co2 due to sector g using good i
+ 375                  co2tax(i,g,r)   co2 tax
+ 376                  clim(r)         CO2 emissions limit (Gton)
+ 377                  sclim(r)        co2 policy switch;
+ 378  scalar          scale           unit chage(from Mton to Gton) /1e-3/;
+ 379   
+ 380  rto0(g,r)    = rto(g,r);
+ 381  voam(i,g,r)  = vdfm(i,g,r) * (1+rtfd0(i,g,r)) + vifm(i,g,r) * (1+rtfi0(i,g,r));
+ 382   
+ 383  w0(r)        = vom("c",r)+vom("i",r);
+ 384  eco2d(i,g,r) = eco2d(i,g,r)*scale;
+ 385  eco2i(i,g,r) = eco2i(i,g,r)*scale;
+ 386  epslond(i,g,r)$evd(i,g,r) = eco2d(i,g,r) / evd(i,g,r);
+ 387  epsloni(i,g,r)$evi(i,g,r) = eco2i(i,g,r) / evi(i,g,r);
+ 388  eco2(i,g,r)  = eco2d(i,g,r)+eco2i(i,g,r);
+ 389  epslon(i,g,r)$(evi(i,g,r)+evd(i,g,r)) = eco2(i,g,r) / (evi(i,g,r)+evd(i,g,r));
+ 390  co2tax(i,g,r)=0;
+ 391  clim(r)=sum((i,g),evd(i,g,r)*epslond(i,g,r)+evi(i,g,r)*epsloni(i,g,r));
+ 392  sclim(r)=yes;
+ 393  *---------end  of  extra setting for gtapaggregation of eppa-------------------------------------------------------------------------
+ 394  *---------other setting for eppa-----------------------------------------------------------------------------------------------
+ 395   
+ 396   
+ 397   
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 10
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 398   
+ 399   
+ 400  *---------end  of  eppa----------------------------------------------------------------------------------------
+ 401   
+EXIT d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+INCLUDE    d:\MIT_HC\GAMS\gtap9_201610\gtap9\defines\eppa6_wh.map
+ 404  * Regional Mapping
+ 405  set rr  Regions in the aggregation /
+ 406   
+ 407          USA     USA
+ 408          CAN     Canada
+ 409          MEX     Mexico
+ 410          BRA     Brazil
+ 411          LAM     Rest of Americas
+ 412          EUR     Europe
+ 413          RUS     Russia
+ 414          ROE     Rest of Europe and Central Asia
+ 415          CHN     China
+ 416          IND     India
+ 417          JPN     Japan
+ 418          ASI     Dynamic Asia
+ 419          REA     Rest of East Asia
+ 420          ANZ     Australia and Oceania
+ 421          MES     Middle East
+ 422          AFR     Africa
+ 423          KOR     South Korea
+ 424          IDZ     Indonesia
+ 425          TWN     Taiwan
+ 426   
+ 427  /;
+ 428   
+ 429  SET mapr(r,rr) Mapping of GTAP Regions (from-to)
+ 430   
+ 431  /
+ 432   
+ 433  ALB     .       roe     Albania
+ 434  ARE     .       mes     United Arab Emirates
+ 435  ARG     .       lam     Argentina
+ 436  ARM     .       roe     Armenia
+ 437  AUS     .       anz     Australia
+ 438  AUT     .       eur     Austria
+ 439  AZE     .       roe     Azerbaijan
+ 440  BEL     .       eur     Belgium
+ 441  BGD     .       rea     Bangladesh
+ 442  BGR     .       eur     Bulgaria
+ 443  BHR     .       mes     Bahrain
+ 444  BLR     .       roe     Belarus
+ 445  BOL     .       lam     Plurinational Republic of Bolivia
+ 446  BRA     .       bra     Brazil
+ 447  BWA     .       afr     Botswana
+ 448  CAN     .       can     Canada
+ 449  CHE     .       eur     Switzerland
+ 450  CHL     .       lam     Chile
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 11
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 451  CHN     .       chn     China
+ 452  CIV     .       afr     Cote d'Ivoire
+ 453  CMR     .       afr     Cameroon
+ 454  COL     .       lam     Colombia
+ 455  CRI     .       lam     Costa Rica
+ 456  CYP     .       eur     Cyprus
+ 457  CZE     .       eur     Czech Republic
+ 458  DEU     .       eur     Germany
+ 459  DNK     .       eur     Denmark
+ 460  ECU     .       lam     Ecuador
+ 461  EGY     .       afr     Egypt
+ 462  ESP     .       eur     Spain
+ 463  EST     .       eur     Estonia
+ 464  ETH     .       afr     Ethiopia
+ 465  FIN     .       eur     Finland
+ 466  FRA     .       eur     France
+ 467  GBR     .       eur     United Kingdom
+ 468  GEO     .       roe     Georgia
+ 469  GHA     .       afr     Ghana
+ 470  GRC     .       eur     Greece
+ 471  GTM     .       lam     Guatemala
+ 472  HKG     .       chn     Hong Kong
+ 473  HND     .       lam     Honduras
+ 474  HRV     .       eur     Croatia
+ 475  HUN     .       eur     Hungary
+ 476  IDN     .       idz     Indonesia
+ 477  IND     .       ind     India
+ 478  IRL     .       eur     Ireland
+ 479  IRN     .       mes     Iran Islamic Republic of
+ 480  ISR     .       mes     Israel
+ 481  ITA     .       eur     Italy
+ 482  JPN     .       jpn     Japan
+ 483  KAZ     .       roe     Kazakhstan
+ 484  KEN     .       afr     Kenya
+ 485  KGZ     .       roe     Kyrgyzstan
+ 486  KHM     .       rea     Cambodia
+ 487  KOR     .       kor     Korea Republic of
+ 488  KWT     .       mes     Kuwait
+ 489  LAO     .       rea     Lao People's Democratic Republic
+ 490  LKA     .       rea     Sri Lanka
+ 491  LTU     .       eur     Lithuania
+ 492  LUX     .       eur     Luxembourg
+ 493  LVA     .       eur     Latvia
+ 494  MAR     .       afr     Morocco
+ 495  MDG     .       afr     Madagascar
+ 496  MEX     .       mex     Mexico
+ 497  MLT     .       eur     Malta
+ 498  MNG     .       rea     Mongolia
+ 499  MOZ     .       afr     Mozambique
+ 500  MUS     .       afr     Mauritius
+ 501  MWI     .       afr     Malawi
+ 502  MYS     .       asi     Malaysia
+ 503  NAM     .       afr     Namibia
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 12
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 504  NGA     .       afr     Nigeria
+ 505  NIC     .       lam     Nicaragua
+ 506  NLD     .       eur     Netherlands
+ 507  NOR     .       eur     Norway
+ 508  NPL     .       rea     Nepal
+ 509  NZL     .       anz     New Zealand
+ 510  OMN     .       mes     Oman
+ 511  PAK     .       rea     Pakistan
+ 512  PAN     .       lam     Panama
+ 513  PER     .       lam     Peru
+ 514  PHL     .       asi     Philippines
+ 515  POL     .       eur     Poland
+ 516  PRT     .       eur     Portugal
+ 517  PRY     .       lam     Paraguay
+ 518  QAT     .       mes     Qatar
+ 519  ROU     .       eur     Romania
+ 520  RUS     .       rus     Russian Federation
+ 521  SAU     .       mes     Saudi Arabia
+ 522  SEN     .       afr     Senegal
+ 523  SGP     .       asi     Singapore
+ 524  SLV     .       lam     El Salvador
+ 525  SVK     .       eur     Slovakia
+ 526  SVN     .       eur     Slovenia
+ 527  SWE     .       eur     Sweden
+ 528  THA     .       asi     Thailand
+ 529  TUN     .       afr     Tunisia
+ 530  TUR     .       roe     Turkey
+ 531  TWN     .       twn     Taiwan
+ 532  TZA     .       afr     Tanzania United Republic of
+ 533  UGA     .       afr     Uganda
+ 534  UKR     .       roe     Ukraine
+ 535  URY     .       lam     Uruguay
+ 536  USA     .       usa     United States of America
+ 537  VEN     .       lam     Venezuela
+ 538  VNM     .       rea     Viet Nam
+ 539  XAC     .       afr     South Central Africa
+ 540  XCA     .       lam     Rest of Central America
+ 541  XCB     .       lam     Caribbean
+ 542  XCF     .       afr     Central Africa
+ 543  XEA     .       rea     Rest of East Asia
+ 544  XEC     .       afr     Rest of Eastern Africa
+ 545  XEE     .       roe     Rest of Eastern Europe
+ 546  XEF     .       eur     Rest of EFTA
+ 547  XER     .       roe     Rest of Europe
+ 548  XNA     .       lam     Rest of North America
+ 549  XNF     .       afr     Rest of North Africa
+ 550  XOC     .       anz     Rest of Oceania
+ 551  XSA     .       rea     Rest of South Asia
+ 552  XSC     .       afr     Rest of South African Customs Union
+ 553  XSE     .       rea     Rest of Southeast Asia
+ 554  XSM     .       lam     Rest of South America
+ 555  XSU     .       roe     Rest of Former Soviet Union
+ 556  XTW     .       anz     Rest of the World
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 13
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 557  XWF     .       afr     Rest of Western Africa
+ 558  XWS     .       mes     Rest of Western Asia
+ 559  ZAF     .       afr     South Africa
+ 560  ZMB     .       afr     Zambia
+ 561  ZWE     .       afr     Zimbabwe
+ 562   
+ 563  BEN     .       afr     Benin
+ 564  BFA     .       afr     Burkina Faso
+ 565  BRN     .       rea     Brunei Darussalam
+ 566  DOM     .       lam     Dominican Republic
+ 567  GIN     .       afr     Guinea
+ 568  JAM     .       lam     Jamaica
+ 569  JOR     .       mes     Jordan
+ 570  PRI     .       lam     Puerto Rico
+ 571  RWA     .       afr     Rwanda
+ 572  TGO     .       afr     Togo
+ 573  TTO     .       lam     Trinidad and Tobago
+ 574   
+ 575  /;
+ 576   
+ 577  * Sectoral Mapping
+ 578   
+ 579  *alias (i,ii);
+ 580  *SET mapi(i,ii)  Mapping for sectors and goods;
+ 581  *mapi(i,i) = yes;
+ 582   
+ 583  set ii Sectors and goods in aggregate model /
+ 584          crop    Agriculture - crops
+ 585          live    Agriculture - livestock
+ 586          fors    Agriculture - forestry
+ 587          food    Food products
+ 588          coal    Coal
+ 589          oil     Crude Oil
+ 590          roil    Refined Oil
+ 591          gas     Gas
+ 592          elec    Electricity
+ 593          eint    Energy-intensive Industries
+ 594          othr    Other Industries
+ 595          serv    Services
+ 596          tran    Transport
+ 597          dwe     Ownership of dwellings
+ 598  *       cgd     Savings Good
+ 599  /;
+ 600   
+ 601  SET mapi(*,ii)  Mapping for sectors and goods /
+ 602   
+ 603  PDR.crop  paddy rice
+ 604  WHT.crop  wheat
+ 605  GRO.crop  cereal grains nec
+ 606  V_F.crop  vegetables - fruit - nuts
+ 607  OSD.crop  oil seeds
+ 608  C_B.crop  sugar cane - sugar beet
+ 609  PFB.crop  plant-based fibers
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 14
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 610  OCR.crop  crops nec
+ 611  CTL.live  bo horses
+ 612  OAP.live  animal products nec
+ 613  RMK.live  raw milk
+ 614  WOL.live  wool - silk-worm cocoons
+ 615  FRS.fors  forestry
+ 616  FSH.live  fishing
+ 617  COA.coal  coal
+ 618  OIL.oil   oil
+ 619  GAS.gas   gas
+ 620  OMN.othr  minerals nec
+ 621  CMT.food  bo meat products
+ 622  OMT.food  meat products
+ 623  VOL.food  vegetable oils and fats
+ 624  ** bio-diesel is included in VOL
+ 625  MIL.food  dairy products
+ 626  PCR.food  processed rice
+ 627  SGR.food  sugar
+ 628  OFD.food  food products nec
+ 629  ** corn ethanol eth1 is included in OFD
+ 630  B_T.food  beverages and tobacco products
+ 631  TEX.othr  textiles
+ 632  WAP.othr  wearing apparel
+ 633  LEA.othr  leather products
+ 634  LUM.othr  wood products
+ 635  PPP.eint  paper products - publishing
+ 636  P_C.roil  petroleum - coal products
+ 637  CRP.eint  chemical - rubber - plastic products
+ 638  ** sugarcane ethanol is included in CRP
+ 639  NMM.eint  mineral products nec
+ 640  I_S.eint  ferrous metals
+ 641  NFM.eint  metals nec
+ 642  FMP.eint  metal products
+ 643  MVH.othr  motor vehicles and parts
+ 644  OTN.othr  transport equipment nec
+ 645  ELE.othr  electronic equipment
+ 646  OME.othr  machinery and equipment nec
+ 647  OMF.othr  manufactures nec
+ 648  ELY.elec  electricity
+ 649  GDT.gas   gas manufacture - distribution
+ 650  WTR.othr  water
+ 651  CNS.othr  construction
+ 652  TRD.serv  trade
+ 653  OTP.tran  transport nec
+ 654  WTP.tran  water transport
+ 655  ATP.tran  air transport
+ 656  CMN.serv  communication
+ 657  OFI.serv  financial services nec
+ 658  ISR.serv  insurance
+ 659  OBS.serv  business services nec
+ 660  ROS.serv  recreational and other services
+ 661  OSG.serv  public admin - and defence - education - health
+ 662  DWE.dwe   ownership of dwellings
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 15
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 663  *DWE.othr  ownership of dwellings
+ 664  *CGDS.cgd  Savings good
+ 665  /;
+ 666   
+ 667  * Note: (YHC: 20131121)
+ 668  * VOL.food  vegetable oils and fats
+ 669  ** bio-diesel is included in VOL
+ 670   
+ 671  * OFD.food  food products nec
+ 672  ** corn ethanol eth1 is included in OFD
+ 673   
+ 674  * CRP.eint  chemical - rubber - plastic products
+ 675  ** sugarcane ethanol is included in CRP
+ 676   
+ 677  *alias (f,ff);
+ 678  *SET mapf(f,ff) Mapping of factors;
+ 679  *mapf(f,f) = yes;
+ 680   
+ 681  SET   ff   Factors of production
+ 682          /
+ 683          lnd     Land,
+ 684          lab     Labor,
+ 685          cap     Capital,
+ 686          fix     Natural resources
+ 687          /;
+ 688   
+ 689   
+ 690  SET     mapf(*,ff)   Factors of production
+ 691          /
+ 692          off_mgr_pros.lab        Officials and Mangers legislators (ISCO-88 Major Groups 1-2),
+ 693          tech_aspros.lab         Technicians technicians and associate professionals
+ 694          clerks.lab              Clerks
+ 695          service_shop.lab        Service and market sales workers,
+ 696          ag_othlowsk.lab         Agricultural and unskilled workers (Major Groups 6-9)
+ 697          Land.lnd                Land,
+ 698          Capital.cap             Capital,
+ 699          NatlRes.fix             Natural resources
+ 700          /;
+ 701   
+ 702  SET eec energy commodities
+ 703          /
+ 704          coal    Coal
+ 705          oil     Crude oil
+ 706          gas     Natural gas,
+ 707          roil    Refined oil products,
+ 708          elec    Electricity
+ 709          /;
+      SET	mape(*,eec) 
+              /
+      	ecoa.coal	Coal,
+      	eoil.oil	Crude oil,
+      	(egas,egdt).gas	Natural gas,
+      	ep_c.roil	Refined oil products,
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 16
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+      	eely.elec	Electricity
+              /;
+ 720  *-----------------------------for eppa-taiwan----------------------------------------
+ 721  SET     mape(*,eec)
+ 722          /
+ 723          coa.coal        Coal,
+ 724          oil.oil Crude oil,
+ 725          (gas,gdt).gas   Natural gas,
+ 726          p_c.roil        Refined oil products,
+ 727          ely.elec        Electricity
+ 728          /;
+ 729  *---------------------------------end of eppa-taiwan------------------------------------
+ 730   
+ 731  alias (ii,jj), (rr,ss);
+ 732   
+ 733  set     gg(*)   All goods in aggregate model plus C - G - I /
+ 734                  c       Household,
+ 735                  g       Government consumption,
+ 736                  i       Investment/;
+ 737  alias (u,*);
+ 738  gg(u)$ii(u) = ii(u);
+ 739  abort$sum(ii$(sameas(ii,"c") or sameas(ii,"g") or sameas(ii,"i")),1) "Invalid identifier: C, G and I are reserved.";
+ 740   
+ 741  parameters
+ 742          vom_(*,rr)      Aggretate output
+ 743          vfm_(ff,*,rr)   Endowments - Firms' purchases at market prices,
+ 744          vdfm_(ii,*,rr)  Intermediates - firms' domestic purchases at market prices,
+ 745          vifm_(ii,*,rr)  Intermediates - firms' imports at market prices,
+ 746          vxmd_(ii,rr,ss) Trade - bilateral exports at market prices,
+ 747          vst_(ii,rr)     Trade - exports for international transportation
+ 748          vtwr_(ii,jj,rr,ss)      Trade - Margins for international transportation at world prices,
+ 749   
+ 750          evt_(ii,rr,rr)  Volume of energy trade (mtoe),
+ 751          evd_(ii,*,rr)   Domestic energy use (mtoe),
+ 752          evi_(ii,*,rr)   Imported energy use (mtoe),
+ 753          eco2d_(ii,*,rr) CO2 emissions in domestic fuels - Mt CO2",
+ 754          eco2i_(ii,*,rr) CO2 emissions in foreign fuels - Mt CO2",
+ 755   
+ 756          rto_(*,rr)      Output (or income) subsidy rates
+ 757          rtf_(ff,*,rr)   Primary factor and commodity rates taxes
+ 758          rtfd_(ii,*,rr)  Firms domestic tax rates
+ 759          rtfi_(ii,*,rr)  Firms' import tax rates
+ 760          rtxs_(ii,rr,ss) Export subsidy rates
+ 761          rtms_(ii,rr,ss) Import taxes rates,
+ 762   
+ 763          esubd_(ii)      Elasticity of substitution (M versus D),
+ 764          esubva_(jj)     Elasticity of substitution between factors
+ 765          esubm_(ii)      Intra-import elasticity of substitution,
+ 766          etrae_(ff)      Elasticity of transformation,
+ 767          eta_(ii,rr)     Income elasticity of demand,
+ 768          epsilon_(ii,rr) Own-price elasticity of demand;
+ 769   
+ 770   
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 17
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 771  alias (i,j), (ii,jj);;
+ 772  alias (r,s), (rr,ss);
+ 773  set maps(s,ss), mapj(j,jj), mapg(*,*)/c.c, i.i, g.g/;
+ 774  maps(r,rr) = mapr(r,rr);
+ 775  mapj(j,jj) = mapi(j,jj);
+ 776  mapg(i,ii) = mapi(i,ii);
+ 777   
+ 778  file ktitle; put ktitle;
+ 779   
+ 780  put_utility 'title' /"Aggregating vst.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+ 814  put_utility 'title' /"Aggregating vom.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+ 848  put_utility 'title' /"Aggregating vfm.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+ 882  put_utility 'title' /"Aggregating vdfm.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+ 916  put_utility 'title' /"Aggregating vifm.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+ 950  put_utility 'title' /"Aggregating vxmd.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+ 984  put_utility 'title' /"Aggregating evd.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1018  put_utility 'title' /"Aggregating evi.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1052  put_utility 'title' /"Aggregating evt.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1086  put_utility 'title' /"Aggregating eco2d.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1120  put_utility 'title' /"Aggregating eco2i.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1154  put_utility 'title' /"Aggregating vtwr.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1188   
+1189  *       First, convert tax rates into tax payments:
+1190   
+1191  rto(g,r)    = rto(g,r)*vom(g,r);
+1192  rtf(f,j,r)  = rtf(f,j,r) * vfm(f,j,r);
+1193  rtfd(i,g,r) = rtfd(i,g,r) * vdfm(i,g,r);
+1194  rtfi(i,g,r) = rtfi(i,g,r) * vifm(i,g,r);
+1195  rtms(i,r,s) = rtms(i,r,s)*((1-rtxs(i,r,s)) * vxmd(i,r,s) + sum(j,vtwr(j,i,r,s)));
+1196  rtxs(i,r,s) = rtxs(i,r,s) * vxmd(i,r,s);
+1197   
+1198   
+1199  *       Aggregate:
+1200   
+1201  put_utility 'title' /"Aggregating rto.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1235  put_utility 'title' /"Aggregating rtf.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1269  put_utility 'title' /"Aggregating rtfd.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1303  put_utility 'title' /"Aggregating rtfi.";
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 18
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1337  put_utility 'title' /"Aggregating rtxs.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1371  put_utility 'title' /"Aggregating rtms.";
+BATINCLUDE d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+1405   
+1406  parameter profit;
+1407  profit(gg,rr) = vom_(gg,rr)
+****                     $141
+**** LINE    111 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+1408                  - sum(ii, vdfm_(ii,gg,rr) + rtfd_(ii,gg,rr))
+****                                $141              $141
+**** LINE    112 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+1409                  - sum(ii, vifm_(ii,gg,rr) + rtfi_(ii,gg,rr));
+****                                $141              $141
+**** LINE    113 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+1410   
+1411  profit(gg,rr) = vom_(gg,rr) - rto_(gg,rr)
+****                                   $141
+**** LINE    115 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+1412                  - sum(ii, vdfm_(ii,gg,rr) + rtfd_(ii,gg,rr))
+1413                  - sum(ii, vifm_(ii,gg,rr) + rtfi_(ii,gg,rr))
+1414                  - sum(ff, vfm_(ff,gg,rr)  + rtf_(ff,gg,rr));
+****                               $141              $141
+**** LINE    118 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+1415  display profit;
+1416   
+1417   
+1418  *       Convert back to rates:
+1419   
+1420  rto_(gg,rr)$vom_(gg,rr) = rto_(gg,rr)/vom_(gg,rr);
+1421  rtf_(ff,jj,rr)$vfm_(ff,jj,rr)  = rtf_(ff,jj,rr) / vfm_(ff,jj,rr);
+1422  rtfd_(ii,gg,rr)$ vdfm_(ii,gg,rr) = rtfd_(ii,gg,rr) / vdfm_(ii,gg,rr);
+1423  rtfi_(ii,gg,rr)$ vifm_(ii,gg,rr) = rtfi_(ii,gg,rr) / vifm_(ii,gg,rr);
+1424  rtxs_(ii,rr,ss)$ vxmd_(ii,rr,ss) = rtxs_(ii,rr,ss) / vxmd_(ii,rr,ss);
+****                       $141              $141
+**** LINE    128 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+1425  rtms_(ii,rr,ss)$((1-rtxs_(ii,rr,ss)) * vxmd_(ii,rr,ss) + sum(jj,vtwr_(jj,ii,rr,ss)))
+****                                                                      $141
+**** LINE    129 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+1426           = rtms_(ii,rr,ss)/((1-rtxs_(ii,rr,ss)) * vxmd_(ii,rr,ss) + sum(jj,vtwr_(jj,ii,rr,ss)));
+****                 $141
+**** LINE    130 INPUT       d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+1427   
+1428  esubd_(ii)$sum(mapi(i,ii), sum((j,r), vdfm(i,j,r)+vifm(i,j,r)))
+1429          = sum(mapi(i,ii), sum((j,r), vdfm(i,j,r)+vifm(i,j,r))*esubd(i)) /
+1430               sum(mapi(i,ii), sum((j,r), vdfm(i,j,r)+vifm(i,j,r)));
+1431  esubva_(jj)$sum(mapi(j,jj), sum((f,r), vfm(f,j,r)))
+1432          = sum(mapi(j,jj), sum((f,r), vfm(f,j,r)*esubva(j))) /
+1433                sum(mapi(j,jj), sum((f,r), vfm(f,j,r)));
+1434  esubm_(ii)$sum((r,mapi(i,ii)), vim(i,r))
+1435          = sum((r,mapi(i,ii)), vim(i,r)*esubm(i)) / sum((r,mapi(i,ii)), vim(i,r));
+1436   
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 19
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1437  etrae_(ff)$sum(mapf(f,ff)$sf(f), sum((j,r), vfm(f,j,r)))
+1438             = sum(mapf(f,ff)$sf(f), sum((j,r), vfm(f,j,r)*etrae(f))) /
+1439               sum(mapf(f,ff)$sf(f), sum((j,r), vfm(f,j,r)));
+1440   
+1441  parameter       vp(i,r) Value of private expenditure;
+1442  vp(i,r) = vdfm(i,"c",r)*(1+rtfd0(i,"c",r)) + vifm(i,"c",r)*(1+rtfi0(i,"c",r));
+1443   
+1444  eta_(ii,rr)$sum((mapr(r,rr),mapi(i,ii)),vp(i,r))
+1445          = sum((mapr(r,rr),mapi(i,ii)),vp(i,r)*eta(i,r)) /
+1446            sum((mapr(r,rr),mapi(i,ii)),vp(i,r));
+1447  epsilon_(ii,rr)$sum((mapr(r,rr),mapi(i,ii)),vp(i,r))
+1448          = sum((mapr(r,rr),mapi(i,ii)),vp(i,r)*epsilon(i,r)) /
+1449            sum((mapr(r,rr),mapi(i,ii)),vp(i,r));
+1450   
+1451  loop(mapf(mf,ff), etrae_(ff) = +inf;);
+1452   
+1454   
+1455  put_utility 'title' /"Unloading dataset.";
+1456  execute_unload '..\data\eppa6_wh.gdx',
+1457          gg=g, rr=r, ff=f, ii=i,
+1458          vfm_=vfm, vdfm_=vdfm, vifm_=vifm,vxmd_=vxmd, vst_=vst, vtwr_=vtwr,
+1459          rto_=rto, rtf_=rtf, rtfd_=rtfd, rtfi_=rtfi, rtxs_=rtxs, rtms_=rtms,
+1460          evd_=evd, evi_=evi, evt_=evt, eco2d_=eco2d, eco2i_=eco2i,
+1461          esubd_=esubd, esubva_=esubva, esubm_=esubm, etrae_=etrae, eta_=eta, epsilon_=epsilon;
+1462  put_utility 'title' /"All done with aggregation.";
+EXIT d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 20
+GAMS Code to Read a GTAP 9 Dataset
+Error Messages
+
+
+141  Symbol declared but no values have been assigned. Check for missing
+        data definition, assignment, data loading or implicit assignment
+        via a solve statement.
+        A wild shot: You may have spurious commas in the explanatory
+        text of a declaration. Check symbol reference list.
+170  Domain violation for element
+492  Symbol not in GDX
+
+**** 37 ERROR(S)   0 WARNING(S)
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 21
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+     2        8 INCLUDE        1       8  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+     3       25 IF EXIST       2      17  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\filter11_001.gdx
+     4       25 GDXIN          2      17  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\filter11_001.gdx
+     5       26 IF EXIST       2      18  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\filter11_001.gdx
+     6      402 EXIT           2     394  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtap9data.gms
+     7      403 INCLUDE        1       9  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\defines\eppa6_wh.map
+     8      781 BATINCLUDE     1      61  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+     9      813 EXIT           8      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    10      815 BATINCLUDE     1      63  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    11      847 EXIT          10      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    12      849 BATINCLUDE     1      65  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    13      881 EXIT          12      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    14      883 BATINCLUDE     1      67  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    15      915 EXIT          14      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    16      917 BATINCLUDE     1      69  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    17      949 EXIT          16      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    18      951 BATINCLUDE     1      71  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    19      983 EXIT          18      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    20      985 BATINCLUDE     1      73  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    21     1017 EXIT          20      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    22     1019 BATINCLUDE     1      75  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    23     1051 EXIT          22      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    24     1053 BATINCLUDE     1      77  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    25     1085 EXIT          24      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    26     1087 BATINCLUDE     1      79  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    27     1119 EXIT          26      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    28     1121 BATINCLUDE     1      81  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    29     1153 EXIT          28      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    30     1155 BATINCLUDE     1      83  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    31     1187 EXIT          30      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    32     1202 BATINCLUDE     1      98  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    33     1234 EXIT          32      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    34     1236 BATINCLUDE     1     100  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    35     1268 EXIT          34      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    36     1270 BATINCLUDE     1     102  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    37     1302 EXIT          36      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    38     1304 BATINCLUDE     1     104  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    39     1336 EXIT          38      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    40     1338 BATINCLUDE     1     106  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    41     1370 EXIT          40      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    42     1372 BATINCLUDE     1     108  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    43     1404 EXIT          42      32  .d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggr.gms
+    44     1463 EXIT           1     167  d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+
+
+COMPILATION TIME     =        0.437 SECONDS     80 MB  24.6.1 r55820 WEX-WEI
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/05/16 15:38:52 Page 22
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+USER: Shih-Mo Lin                                    H160307:0527AO-WIN
+      Chung Yuan Christian University, Dept. of International TrDC10738
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\gtapaggr.gms
+Output     d:\MIT_HC\GAMS\gtap9_201610\gtap9\build\aggrtest
+
+**** USER ERROR(S) ENCOUNTERED

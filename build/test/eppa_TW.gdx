@@ -1,0 +1,1521 @@
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/06/16 10:40:06 Page 1
+Aggregation Program for the GTAP9 Database
+C o m p i l a t i o n
+
+
+   2   
+   6   
+INCLUDE    d:\mit_hc\gams\gtap9_201610\gtap9\build\gtap9data.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/06/16 10:40:06 Page 2
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+  10   
+  12   
+  13  scalar nd       Number of decimals /0/;
+  14  abort$(nd<>round(nd)) "Number of decimals must be an integer";
+  15   
+  20   
+  21  set     g(*)    Goods plus C and G;
+GDXIN   d:\mit_hc\gams\gtap9_201610\gtap9\build\filter11_001.gdx
+--- LOAD  g = 3:g
+  25   
+  26  set     i(g)    Goods
+  27          f(*)    Factors;
+--- LOAD  f = 5:f
+--- LOAD  i = 4:i
+  30  set r(*)        Regions;
+--- LOAD  r = 6:r
+  32   
+  33   
+  34  set     rnum(r) Numeraire region,
+  35          sf(f)   Sluggish primary factors (sector-specific),
+  36          mf(f)   Mobile primary factors;
+  37   
+  38  alias (r,s), (i,j);
+  39   
+  40  display r;
+  41  parameters
+  42          vfm(f,g,r)      Endowments - Firms' purchases at market prices,
+  43          vdfm(i,g,r)     Intermediates - firms' domestic purchases at market prices,
+  44          vifm(i,g,r)     Intermediates - firms' imports at market prices,
+  45          vxmd(i,r,s)     Trade - bilateral exports at market prices,
+  46          vst(i,r)        Trade - exports for international transportation
+  48          vtwr(i,j,r,s)   Trade - Margins for international transportation at world prices;
+  49   
+--- LOAD  vfm = 12:vfm
+--- LOAD  vdfm = 13:vdfm
+--- LOAD  vifm = 14:vifm
+--- LOAD  vxmd = 15:vxmd
+--- LOAD  vst = 16:vst
+--- LOAD  vtwr = 17:vtwr
+  52   
+  53  if (nd>0,
+  54          vfm(f,g,r) = vfm(f,g,r)$round(vfm(f,g,r),nd);
+  55          vdfm(i,g,r) = vdfm(i,g,r)$round(vdfm(i,g,r),nd);
+  56          vifm(i,g,r) = vifm(i,g,r)$round(vifm(i,g,r),nd);
+  57          vxmd(i,r,s) = vxmd(i,r,s)$round(vxmd(i,r,s),nd);
+  58          vst(i,r) = vst(i,r)$round(vst(i,r),nd);
+  59          vtwr(i,j,r,s) = vtwr(i,j,r,s)$round(vtwr(i,j,r,s),nd);
+  61  );
+  62   
+  63  parameter
+  64          evt(i,r,r)      Volume of energy trade (mtoe),
+  65          evd(i,g,r)      Domestic energy use (mtoe),
+  66          evi(i,g,r)      Imported energy use (mtoe),
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/06/16 10:40:06 Page 3
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+  67          eco2d(i,g,r)    CO2 emissions in domestic fuels - Mt CO2",
+  68          eco2i(i,g,r)    CO2 emissions in foreign fuels - Mt CO2";
+  69   
+--- LOAD  evd = 19:evd
+--- LOAD  evi = 20:evi
+--- LOAD  evt = 18:evt
+--- LOAD  eco2d = 21:eco2d
+--- LOAD  eco2i = 22:eco2i
+  71  if (nd>0,
+  72          evt(i,r,s)  = evt(i,r,s)$round(evt(i,r,s), nd);
+  73          evd(i,g,r) = evd(i,g,r)$round(evd(i,g,r), nd);
+  74          evi(i,g,r) = evi(i,g,r)$round(evi(i,g,r), nd);
+  75          eco2d(i,g,r) = eco2d(i,g,r)$round(eco2d(i,g,r), nd);
+  76          eco2i(i,g,r) = eco2i(i,g,r)$round(eco2i(i,g,r), nd);
+  77  );
+  78   
+  79  parameter
+  80          rto(g,r)        Output (or income) subsidy rates
+  81          rtf(f,g,r)      Primary factor and commodity rates taxes
+  82          rtfd(i,g,r)     Firms domestic tax rates
+  83          rtfi(i,g,r)     Firms' import tax rates
+  84          rtxs(i,r,s)     Export subsidy rates
+  86          rtms(i,r,s)     Import taxes rates;
+  87   
+--- LOAD  rto = 23:rto
+--- LOAD  rtf = 24:rtf
+--- LOAD  rtfd = 25:rtfd
+--- LOAD  rtfi = 26:rtfi
+--- LOAD  rtxs = 27:rtxs
+--- LOAD  rtms = 28:rtms
+  90   
+  91  if (nd>0,
+  92          rto(g,r) = rto(g,r)$round(rto(g,r),nd);
+  93          rtf(f,g,r) = rtf(f,g,r)$round(rtf(f,g,r),nd);
+  94          rtfd(i,g,r) = rtfd(i,g,r)$round(rtfd(i,g,r),nd);
+  95          rtfi(i,g,r) = rtfi(i,g,r)$round(rtfi(i,g,r),nd);
+  96          rtxs(i,r,s) = rtxs(i,r,s)$round(rtxs(i,r,s),nd);
+  97          rtms(i,r,s) = rtms(i,r,s)$round(rtms(i,r,s),nd);
+  99  );
+ 100  parameter
+ 101          esubd(i)        Elasticity of substitution (M versus D),
+ 102          esubva(g)       Elasticity of substitution between factors
+ 103          esubm(i)        Intra-import elasticity of substitution,
+ 104          etrae(f)        Elasticity of transformation,
+ 105          eta(i,r)        Income elasticity of demand,
+ 106          epsilon(i,r)    Own-price elasticity of demand;
+ 107   
+--- LOAD  esubd = 29:esubd
+--- LOAD  esubva = 30:esubva
+--- LOAD  esubm = 31:esubm
+--- LOAD  etrae = 32:etrae
+--- LOAD  eta = 33:eta
+--- LOAD  epsilon = 34:epsilon
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/06/16 10:40:06 Page 4
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 109   
+ 110  *       Declare some intermediate arrays which are required to
+ 111  *       evaluate tax rates:
+ 112   
+ 113  parameter       vdm(g,r)        Aggregate demand for domestic output,
+ 114                  vom(g,r)        Total supply at market prices;
+ 115   
+ 116  vdm(i,r) = sum(g, vdfm(i,g,r));
+ 117  vom(i,r) = vdm(i,r) + sum(s, vxmd(i,r,s)) + vst(i,r);
+ 118   
+ 119  parameter
+ 120          rtf0(f,g,r)     Primary factor and commodity rates taxes
+ 121          rtfd0(i,g,r)    Firms domestic tax rates
+ 122          rtfi0(i,g,r)    Firms' import tax rates
+ 123          rtxs0(i,r,s)    Export subsidy rates
+ 124          rtms0(i,r,s)    Import taxes rates;
+ 125   
+ 126  rtf0(f,g,r) = rtf(f,g,r);
+ 127  rtfd0(i,g,r) = rtfd(i,g,r);
+ 128  rtfi0(i,g,r) = rtfi(i,g,r);
+ 129  rtxs0(i,r,s) = rtxs(i,r,s);
+ 130  rtms0(i,r,s) = rtms(i,r,s);
+ 131   
+ 132  parameter       pvxmd(i,s,r)    Import price (power of benchmark tariff)
+ 133                  pvtwr(i,s,r)    Import price for transport services;
+ 134   
+ 135  pvxmd(i,s,r) = (1+rtms0(i,s,r)) * (1-rtxs0(i,s,r));
+ 136  pvtwr(i,s,r) = 1+rtms0(i,s,r);
+ 137   
+ 138  parameter
+ 139          vtw(j)          Aggregate international transportation services,
+ 140          vpm(r)          Aggregate private demand,
+ 141          vgm(r)          Aggregate public demand,
+ 142          vim(i,r)        Aggregate imports,
+ 143          evom(f,r)       Aggregate factor endowment at market prices,
+ 144          vb(*)           Current account balance;
+ 145   
+ 146  vtw(j) = sum(r, vst(j,r));
+ 147  vom("c",r) = sum(i, vdfm(i,"c",r)*(1+rtfd0(i,"c",r)) + vifm(i,"c",r)*(1+rtfi0(i,"c",r)))/(1-rto("c",r));
+ 148  vom("g",r) = sum(i, vdfm(i,"g",r)*(1+rtfd0(i,"g",r)) + vifm(i,"g",r)*(1+rtfi0(i,"g",r)))/(1-rto("g",r));
+ 149  vom("i",r) = sum(i, vdfm(i,"i",r)*(1+rtfd0(i,"i",r)) + vifm(i,"i",r)*(1+rtfi0(i,"i",r)))/(1-rto("i",r));
+ 150   
+ 151  vdm("c",r) = vom("c",r);
+ 152  vdm("g",r) = vom("g",r);
+ 153  vim(i,r) =  sum(g, vifm(i,g,r));
+ 154  evom(f,r) = sum(g, vfm(f,g,r));
+ 155  vb(r) = vom("c",r) + vom("g",r) + vom("i",r)
+ 156          - sum(f, evom(f,r))
+ 157          - sum(g,  vom(g,r)*rto(g,r))
+ 158          - sum(g,  sum(i, vdfm(i,g,r)*rtfd(i,g,r) + vifm(i,g,r)*rtfi(i,g,r)))
+ 159          - sum(g,  sum(f, vfm(f,g,r)*rtf(f,g,r)))
+ 160          - sum((i,s), rtms(i,s,r) *  (vxmd(i,s,r) * (1-rtxs(i,s,r)) + sum(j,vtwr(j,i,s,r))))
+ 161          + sum((i,s), rtxs(i,r,s) * vxmd(i,r,s));
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/06/16 10:40:06 Page 5
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 162   
+ 163  vb("chksum") = sum(r, vb(r));
+ 164  display vb;
+ 165   
+ 166  *       Determine which factors are sector-specific
+ 167   
+ 168  mf(f) = yes$(1/etrae(f)=0);
+ 169  sf(f) = yes$(1/etrae(f)>0);
+ 170  display mf,sf;
+ 171   
+ 172  parameter       mprofit Zero profit for m,
+ 173                  yprofit Zero profit for y;
+ 174   
+ 175  mprofit(i,r) = vim(i,r) - sum(s, pvxmd(i,s,r)*vxmd(i,s,r)+sum(j, vtwr(j,i,s,r))*pvtwr(i,s,r));
+ 176  mprofit(i,r) = round(mprofit(i,r),5);
+ 177  display mprofit;
+ 178   
+ 179  yprofit(g,r) = vom(g,r)*(1-rto(g,r))
+ 180          - sum(i, vdfm(i,g,r)*(1+rtfd0(i,g,r))
+ 181                 + vifm(i,g,r)*(1+rtfi0(i,g,r)))
+ 182          - sum(f, vfm(f,g,r)*(1+rtf0(f,g,r)));
+ 183   
+ 184  yprofit(g,r) = round(yprofit(g,r),6)
+ 185  display yprofit;
+ 186   
+ 187  *       Define a numeraire region for denominating international
+ 188  *       transfers:
+ 189   
+ 190  rnum(r) = yes$(vom("c",r)=smax(s,vom("c",s)));
+ 191  display rnum;
+ 192  *---------only for eppa----------------------------------------------------------------------------
+GDXIN   d:\mit_hc\gams\gtap9_201610\gtap9\data11\elasticity.gdx
+ 194   
+ 195   
+ 196  set     ghg     GREEN HOUSE GAS POLLUTANTS
+ 197          bt      BACKSTOP TECHNOLOGIES
+ 198          fa      for aggregate fixed factor and armington goods (prod d)
+ 199          layer   CES NESTING HIERARCHY
+ 200          x       Homogenous goods
+ 201          e(i)    ENERGY COMMODITIES;
+ 202   
+--- LOAD  ghg = 6:GHG
+--- LOAD  bt = 7:bt
+--- LOAD  fa = 8:fa
+--- LOAD  layer = 9:LAYER
+--- LOAD  x = 5:X
+--- LOAD  e = 4:e
+ 204   
+ 205  parameter
+ 206  SELAS(*,layer,r)        INITIAL SUBSTITUTION ELASTICITY MATRIX
+ 207  esup(*,r)               fixed factor substitution elasticity
+ 208  delas                   Final demand elasticity between energy and non-energy composites
+ 209  sigtrn                  Elasticity between transport consumption and other consumption in final demand
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/06/16 10:40:06 Page 6
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 210  d_elas(r)               top final demand substitution elasticity
+ 211  d_elase(r)              substitution among energy
+ 212  d_elaso(r)              substitution among otherind and enerint
+ 213  d_elasa(r)              substitution between agriculure and the rest
+ 214  ESUBE(*,r)              Elasticity of substitution between energy inputs
+ 215  sigc                    top level elasticity between energy consumption and gases
+ 216  siggv                   Elasticity of substitution for ghg in vintaged sectors
+ 217  sigg                    Elasticity of substitution for ghg
+ 218  sigg0                   Elasticity of substitution for ghg
+ 219  sigu                    top level transformation elasticity between production and urban gases
+ 220  pnesta                  production sectors nest a substitution elasticity
+ 221  enesta                  energy input to electricity sector nest a substitution elasticity
+ 222  tnesta                  hh transport substitution elasticity between roil and the rest of own-supplied transport
+ 223  tnests                  hh transport top nest elasticity (between purchased and own-supplied)
+ 224  s_bc(*,r)               sectoral elasticity of substitution for black and organic carbon
+ 225  bsigma(r)               Elasticity of substitution for biomass generation
+ 226  boilsig(r)              Fixed factor elasticity for 2nd gen bio-oil
+ 227  boilffg(r)              Fixed factor elasticity for 1st gen bio-oil
+ 228  etag(r,*)               income elasticity of g(redefined??)
+ 229  ***vdfmplusvifm_(irh,iii,rrr)  base year vdfm plus vifm
+ 230  **price_(irh,rrr,t)     Armington price with Reimer-Hertel sectors
+ 231  ***finalc_                      HH aggregated final consumption expenditure in billion US$
+ 232  **finalcp_              per capita HH aggregate final consumption expenditure in thousand US$ divided by 100
+ 233  **u_(rrr,t)             AIDADS utility level
+ 234  ***what_(irh,rrr,t)     w hat
+ 235  ***xhat_(irh,rrr,t)     x hat
+ 236  ***phia_(irh,rrr,t)     phi in the AIDADS system
+ 237  ***mbs_(irh,rrr,t)      marginal budget share
+ 238  ***elas_(irh,rrr,t)     income elasticity with Reimer-Hertel sector
+ 239  ***elastot_(irh,rrr,t)  elas converted from individual to aggregated level
+ 240  ***tha_(rrr,t)          correction for income elasticities of other sectors
+ 241  **alpha(irh)
+ 242  **beta(irh)
+ 243  **gamma(irh)
+ 244  **price07_e4_(irh,rrr)  base year real price levels from EPPA4 with base year 1997
+ 245  usda(r,*)               USDA ICP income elasticities for 2005
+ 246  wsigma(r)               Elasticity of substitution for wind generation
+ 247  bsf(*,r)                backstop fixed factor substitution elasticity
+ 248   
+ 249  efe(e,*,r)              Elasticity of substitution for ghg and energy-fe.tl (prod d)
+ 250  ene(*,r)                Elasticity of substitution for non-energy product-ne (prod d&z&dv)
+ 251  efa(fa,e,r)             Elasticity of substitution for fixed factor and armington goods (prod d)
+ 252  ****sigma(r)            Elasticity of substitution for nuclear energy
+ 253  neta(r)                 parameter used to calculate sigma-nuclear elasticity
+ 254  ****hsigma(r)           Elasticity of substitution for hydroelectric
+ 255  heta(r)                 parameter used to calculate hsigma-hydroelectric elasticity
+ 256  esubi(r)                Elasticity of substitution for invesment
+ 257  esb(r)                  Elasticity of substitution for household transport
+ 258  eyt                     Elasticity of substitution for international transport
+ 259  eeid(e,*,r)             Elasticity of substitution for conventional intermediate energy demand
+ 260  eedf(e,r)               Elasticity of substitution for conventional final energy demand
+ 261  etedf(e,r)              Elasticity of substitution for conventional final energy demand -- hh transport
+ 262  eeid_ghg(e,*,r)         Elasticity of substitution for energy demand inclusive of ghg -- intermediate
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/06/16 10:40:06 Page 7
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 263  efd_ghg(e,*,r)          Elasticity of substitution for energy demand inclusive of ghg -- final
+ 264  etefd_ghg(e,*,r)        Elasticity of substitution for energy demand inclusive of ghg -- hh transport
+ 265   
+ 266  err(r)                  Elasticity of substitution for international tansport and import-rr.tl(prod m)
+ 267  ehomm(x,r)              Elasticity of substitution for net imports of homogenous goods
+ 268  ehomx(x,r)              Elasticity of substitution for net exports of homogenous goods
+ 269  ebiom_f(r)              Elasticity of substitution for net imports of bio-oil
+ 270  ebiom_i(*,r)            Elasticity of substitution for net imports of bio-oil
+ 271  ebiox(r)                Elasticity of substitution for net exports of bio-oil
+ 272  eed(r)                  Elasticity of substitution for energy and dwelling goods(prod Z)
+ 273  ew(r)                   Elasticity of substitution for welfare
+ 274  edv(r)                  Elasticity of substitution for dv's other input(a)
+ 275   
+ 276  ecva(bt,r)              Elasticity of substitution for cva (prod eb)
+ 277  efva(bt,r)              Elasticity of substitution for fva (prod eb)
+ 278  egva(bt,r)              Elasticity of substitution for gva (prod eb)
+ 279  etdva(bt,r)             Elasticity of substitution for tdva (prod eb)
+ 280  egtd(bt,r)              Elasticity of substitution for cva (prod eb)
+ 281  esva(bt,r)              Elasticity of substitution for sva (prod eb)
+ 282  eeban(r)                Elasticity of substitution for eb-adv-nucl
+ 283  eva(bt,r)               Elasticity of substitution for va (prod eb)
+ 284   
+ 285  ewiput(r)               Elasticity of substitution for eb-wind input-b
+ 286  ebioput(r)              Elasticity of substitution for eb-bioe input-b
+ 287  esiput(r)               Elasticity of substitution for eb-solar input-a
+ 288  ebva(r)                 Elasticity of substitution for eb-windbio input bio cap&lab-b
+ 289  egb(r)                  Elasticity of substitution for eb-windgas input gas cap&lab-b
+ 290  egc(r)                  Elasticity of substitution for eb-windgas input for carbon-c
+ 291  egf(r)                  Elasticity of substitution for eb-windgas input for carbon&va of gas-f
+ 292  eob(r)                  Elasticity of substitution for eb-biooil input armington goods-b
+ 293  **** eb still have lots parameters not included
+ 294   
+ 295  eebv(r)                 Elasticity of substitution for vintaged backstop production
+ 296  eeqco2(r)               Elasticity of substitution for transforming carbon rights to ghg rights -- regional or regional to international
+ 297  eeqghg(ghg,r)           Elasticity of substitution for transforming ghg rights to carbon rights -- regional or regional to international
+ 298  ;
+ 299   
+ 300  * Elasticities between non-elec and elec in cosumption, investment and
+ 301  * government.
+ 302   
+ 303  SCALARS
+ 304          NOEEC
+ 305          NOEEI
+ 306          NOEEG
+ 307          ESUBG Elasticity in government demand ;
+ 308   
+ 309  * add ghg data from edgar
+ 310  parameters
+ 311  CH4     global CH4      emissions in 2010 (K tons)
+ 312  CH4C    global CH4      emissions in 2010 with combustion activity (K tons)
+ 313  CH4N    global CH4      emissions in 2010 with non-combustion activity (K tons)
+ 314  N2O     global N2O      emissions in 2010 (K tons)
+ 315  N2OC    global NO2      emissions in 2010 with combustion activity (K tons)
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/06/16 10:40:06 Page 8
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 316  N2ON    global NO2      emissions in 2010 with non-combustion activity (K tons)
+ 317  SF6     global SF6      emissions in 2010 (K tons)
+ 318  SF6C    global SF6      emissions in 2010 with combustion activity (K tons)
+ 319  SF6N    global SF6      emissions in 2010 with non-combustion activity (K tons)
+ 320  HFCs    global HFCs     emissions in 2010 (K tons)
+ 321  HFCsC   global HFCs     emissions in 2010 with combustion activity (K tons)
+ 322  HFCsN   global HFCs     emissions in 2010 with non-combustion activity (K tons)
+ 323  PFCs    global PFCs     emissions in 2010 (K tons)
+ 324  PFCsC   global PFCs     emissions in 2010 with combustion activity (K tons)
+ 325  PFCsN   global PFCs     emissions in 2010 with non-combustion activity (K tons)
+ 326  ;
+ 327   
+ 328   
+--- LOAD  SELAS = 10:SELAS
+--- LOAD  esup = 11:esup
+--- LOAD  delas = 12:delas
+--- LOAD  sigtrn = 13:sigtrn
+--- LOAD  d_elas = 14:d_elas
+--- LOAD  d_elase = 15:d_elase
+--- LOAD  d_elaso = 16:d_elaso
+--- LOAD  d_elasa = 17:d_elasa
+--- LOAD  ESUBE = 18:ESUBE
+--- LOAD  sigc = 19:sigc
+--- LOAD  siggv = 20:siggv
+--- LOAD  sigg = 21:sigg
+--- LOAD  sigg0 = 22:sigg0
+--- LOAD  sigu = 23:sigu
+--- LOAD  pnesta = 24:pnesta
+--- LOAD  enesta = 25:enesta
+--- LOAD  tnesta = 26:tnesta
+--- LOAD  tnests = 27:tnests
+--- LOAD  s_bc = 28:s_bc
+--- LOAD  bsigma = 29:bsigma
+--- LOAD  boilsig = 30:boilsig
+--- LOAD  boilffg = 31:boilffg
+--- LOAD  etag = 32:etag
+--- LOAD  usda = 33:usda
+--- LOAD  wsigma = 34:wsigma
+--- LOAD  bsf = 35:bsf
+--- LOAD  efe = 36:efe
+--- LOAD  ene = 37:ene
+--- LOAD  efa = 38:efa
+--- LOAD  neta = 39:neta
+--- LOAD  heta = 40:heta
+--- LOAD  esubi = 41:esubi
+--- LOAD  esb = 42:esb
+--- LOAD  eyt = 43:eyt
+--- LOAD  eeid = 44:eeid
+--- LOAD  eedf = 45:eedf
+--- LOAD  etedf = 46:etedf
+--- LOAD  eeid_ghg = 47:eeid_ghg
+--- LOAD  efd_ghg = 48:efd_ghg
+--- LOAD  etefd_ghg = 49:etefd_ghg
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/06/16 10:40:06 Page 9
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+--- LOAD  err = 50:err
+--- LOAD  ehomm = 51:ehomm
+--- LOAD  ehomx = 52:ehomx
+--- LOAD  ebiom_f = 53:ebiom_f
+--- LOAD  ebiom_i = 54:ebiom_i
+--- LOAD  ebiox = 55:ebiox
+--- LOAD  eed = 56:eed
+--- LOAD  ew = 57:ew
+--- LOAD  edv = 58:edv
+--- LOAD  ecva = 59:ecva
+--- LOAD  efva = 60:efva
+--- LOAD  egva = 61:egva
+--- LOAD  etdva = 62:etdva
+--- LOAD  egtd = 63:egtd
+--- LOAD  esva = 64:esva
+--- LOAD  eeban = 65:eeban
+--- LOAD  eva = 66:eva
+--- LOAD  ewiput = 67:ewiput
+--- LOAD  ebioput = 68:ebioput
+--- LOAD  esiput = 69:esiput
+--- LOAD  ebva = 70:ebva
+--- LOAD  egb = 71:egb
+--- LOAD  egc = 72:egc
+--- LOAD  egf = 73:egf
+--- LOAD  eob = 74:eob
+--- LOAD  eebv = 75:eebv
+--- LOAD  eeqco2 = 76:eeqco2
+--- LOAD  eeqghg = 77:eeqghg
+--- LOAD  NOEEC = 78:NOEEC
+--- LOAD  NOEEI = 79:NOEEI
+--- LOAD  NOEEG = 80:NOEEG
+--- LOAD  ESUBG = 81:ESUBG
+ 335   
+ 336  *$gdxin "..\data11\GtapGhg2010.gdx"
+ 337  *$load CH4, CH4C, CH4N, N2O, N2OC, N2ON, SF6, SF6C, SF6N, HFCs, HFCsC, HFCsN, PFCs, PFCsC, PFCsN
+ 338   
+ 339  set con  subset-consumption sector /c/
+ 340  *set con(g)  subset-consumption sector /c/
+ 341  *    ec(i)   Energy goods
+ 342      ec   Energy goods
+ 343                  /
+ 344                  coal    Coal
+ 345                  oil     Crude oil
+ 346                  gas     Natural gas
+ 347                  roil    Refined oil products
+ 348                  elec    Electricity
+ 349                  /;
+ 350  set     GI goverment and investment                /g, i/;
+ 351  SET     NE NON-ENERGY COMMODITIES                  /crop, live, fors, food, EINT, OTHR, serv, tran, dwe/;
+ 352  set     nend non-energy commodities excluding dwe /crop, live, fors, food, EINT, OTHR, serv, tran/;
+ 353  set     dwe  ownership of dwellings               /dwe/;
+ 354   
+ 355   
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 10
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 356  SET     ENOE NON-ELEC ENERGY COMMODITIES           /COAL, OIL, GAS, ROIL/;
+ 357  SET     ELEC ELEC ENERGY COMMODITIES               /ELEC/;
+ 358  *SET    KSI(I) CAPITAL-SPECIFIC INDUSTRIES /COAL, OIL, GAS, ROIL, ELEC, EINT/;
+ 359  *SET     X(I) Homogenous goods /OIL/;
+ 360  *SET     X(I) Homogenous goods /OIL, GAS/;
+ 361  *SET    CGD(I) /CGD/;
+ 362  *SET     OIL(I) OIL /OIL/;
+ 363  *SET     GAS(I) GAS /GAS/;
+ 364  *set    roil(i) /roil/;
+ 365  *set    coal(i) /coal/;
+ 366  *set    oil_col(enoe) /roil, coal/;
+ 367  *set    refo(e) /roil/;
+ 368  SET     AGRI Agriculture /crop, live, fors/,
+ 369          EINT Energy intensive /eint/;
+ 370  *SET    TRANSFUEL(I)    SECTOR USING FUEL AS TRASNPORTATION /CROP, SERV, TRAN/;
+ 371  SET     AENOE /COAL, OIL, GAS, ROIL, crop, live, fors, ELEC, EINT/;
+ 372  SET     NAENOE /FOOD, OTHR, serv, tran, dwe/;
+ 373  *SET    VEHIFUELP(E) /ROIL/;
+ 374  *SET            OTE(NE) /EINT, OTHR/;
+ 375  *SET            AGDEV(R) Agri-consumer developing countries /CHN, IND, REA, BRA, AFR/;
+ 376   
+ 377  * VJK (LUC)
+ 378   
+ 379  * LUC: Land use categories
+ 380   
+ 381   
+ 382  parameter       esub(g)         Top-level elasticity indemand /c 1/
+ 383                  voam(i,g,r)     value of armington goods at biginning
+ 384                  rtfa0(i,g,r)    Base year effective tax rate of Armington good i use by g
+ 385                  w0(r)           utility at biginning
+ 386                  rto0(g,r)       Commodity rates taxes at biginning
+ 387                  epslond(i,g,r)  co2-energy transform coeffiecient(Gton-Mtoe)
+ 388                  epsloni(i,g,r)  co2-energy transform coeffiecient
+ 389                  epslon(i,g,r)   co2-energy transform coeffiecient
+ 390                  eco2(i,g,r)     the total co2 due to sector g using good i
+ 391                  co2tax(i,g,r)   co2 tax
+ 392                  clim(r)         CO2 emissions limit (Gton)
+ 393                  sclim(r)        co2 policy switch;
+ 394  scalar          scale           unit chage(from Mton to Gton) /1e-3/;
+ 395   
+ 396  rto0(g,r)    = rto(g,r);
+ 397  *voam(i,g,r)  = vdfm(i,g,r) * (1+rtfd0(i,g,r)) + vifm(i,g,r) * (1+rtfi0(i,g,r));
+ 398  voam(i,g,r)  = vdfm(i,g,r)  + vifm(i,g,r) ;
+ 399  rtfa0(i,g,r)$voam(i,g,r)= ((vdfm(i,g,r)*(1+rtfd0(i,g,r))+vifm(i,g,r)*(1+rtfi0(i,g,r)))/voam(i,g,r))-1;
+ 400   
+ 401  w0(r)        = vom("c",r)+vom("i",r);
+ 402  *eco2d(i,g,r)$(evd(i,g,r)=0) = 0;
+ 403  *eco2i(i,g,r)$(evi(i,g,r)=0) = 0;
+ 404  *eco2d(i,g,r) = eco2d(i,g,r)*scale;
+ 405  *eco2i(i,g,r) = eco2i(i,g,r)*scale;
+ 406  epslond(i,g,r)$evd(i,g,r) = eco2d(i,g,r) / evd(i,g,r);
+ 407  epsloni(i,g,r)$evi(i,g,r) = eco2i(i,g,r) / evi(i,g,r);
+ 408  *eco2(i,g,r)  = eco2d(i,g,r)+eco2i(i,g,r);
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 11
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 409  *epslon(i,g,r)$(evi(i,g,r)+evd(i,g,r)) = eco2(i,g,r) / (evi(i,g,r)+evd(i,g,r));
+ 410  *epslon("coal",g,r)                     = 0.1*44/12*0.24686/23.88;
+ 411  *epslon("roil",g,r)                     = 0.1*44/12*0.199/23.88  ;
+ 412  *epslon("gas",g,r)                      = 0.1*44/12*0.137/23.88  ;
+ 413  co2tax(i,g,r)=0;
+ 414  *clim(r)=sum((i,g),eco2d(i,g,r)+eco2i(i,g,r));
+ 415  *clim(r)=sum((i,g),(evi(i,g,r)+evd(i,g,r))*epslon(i,g,r));
+ 416  *eco2(i,g,r)  = (evi(i,g,r)+evd(i,g,r))*epslon(i,G,R);
+ 417  sclim(r)=no;
+ 418   
+ 419   
+ 420   
+ 421   
+ 422   
+ 423   
+ 424   
+ 425   
+ 426  *---------end  of  extra setting for gtapaggregation of eppa----------------------------------------------------------------------------------------
+EXIT d:\mit_hc\gams\gtap9_201610\gtap9\build\gtap9data.gms
+ 428  $include ..\defines\eppa_TW.map
+****                                $282
+**** LINE      9 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+ 429   
+ 430  alias (ii,jj), (rr,ss);
+****              $157     $157
+**** LINE     11 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+ 431   
+ 432  set     gg(*)   All goods in aggregate model plus C - G - I /
+ 433                  c       Household,
+ 434                  g       Government consumption,
+ 435                  i       Investment/;
+ 436  alias (u,*);
+ 437  gg(u)$ii(u) = ii(u);
+****         $141
+**** LINE     18 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+ 438  abort$sum(ii$(sameas(ii,"c") or sameas(ii,"g") or sameas(ii,"i")),1) "Invalid identifier: C, G and I are reserved.";
+ 439   
+ 440  parameters
+ 441          vom_(*,rr)      Aggretate output
+ 442          vfm_(ff,*,rr)   Endowments - Firms' purchases at market prices,
+****                $120
+**** LINE     23 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+ 443          vdfm_(ii,*,rr)  Intermediates - firms' domestic purchases at market prices,
+ 444          vifm_(ii,*,rr)  Intermediates - firms' imports at market prices,
+ 445          vxmd_(ii,rr,ss) Trade - bilateral exports at market prices,
+ 446          vst_(ii,rr)     Trade - exports for international transportation
+ 447          vtwr_(ii,jj,rr,ss)      Trade - Margins for international transportation at world prices,
+ 448   
+ 449          evt_(ii,rr,rr)  Volume of energy trade (mtoe),
+ 450          evd_(ii,*,rr)   Domestic energy use (mtoe),
+ 451          evi_(ii,*,rr)   Imported energy use (mtoe),
+ 452          eco2d_(ii,*,rr) CO2 emissions in domestic fuels - Mt CO2",
+ 453          eco2i_(ii,*,rr) CO2 emissions in foreign fuels - Mt CO2",
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 12
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 454   
+ 455          rto_(*,rr)      Output (or income) subsidy rates
+ 456          rtf_(ff,*,rr)   Primary factor and commodity rates taxes
+ 457          rtfd_(ii,*,rr)  Firms domestic tax rates
+ 458          rtfi_(ii,*,rr)  Firms' import tax rates
+ 459          rtxs_(ii,rr,ss) Export subsidy rates
+ 460          rtms_(ii,rr,ss) Import taxes rates,
+ 461   
+ 462          esubd_(ii)      Elasticity of substitution (M versus D),
+ 463          esubva_(jj)     Elasticity of substitution between factors
+ 464          esubm_(ii)      Intra-import elasticity of substitution,
+ 465          etrae_(ff)      Elasticity of transformation,
+ 466          eta_(ii,rr)     Income elasticity of demand,
+ 467          epsilon_(ii,rr) Own-price elasticity of demand;
+ 468   
+ 469   
+ 470  alias (i,j), (ii,jj);;
+****                    $406,158
+**** LINE     51 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+ 471  alias (r,s), (rr,ss);
+****                    $406,158
+**** LINE     52 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+ 472  set maps(s,ss), mapj(j,jj), mapg(*,*)/c.c, i.i, g.g/;
+ 473  maps(r,rr) = mapr(r,rr);
+****          $352,171$140 $352
+**** LINE     54 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+ 474  mapj(j,jj) = mapi(j,jj);
+****          $352    $140 $352
+**** LINE     55 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+ 475  mapg(i,ii) = mapi(i,ii);
+ 476   
+ 477  file ktitle; put ktitle;
+ 478   
+ 479  put_utility 'title' /"Aggregating vst.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 513  put_utility 'title' /"Aggregating vom.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 547  put_utility 'title' /"Aggregating vfm.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 581  put_utility 'title' /"Aggregating vdfm.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 615  put_utility 'title' /"Aggregating vifm.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 649  put_utility 'title' /"Aggregating vxmd.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 683  put_utility 'title' /"Aggregating evd.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 717  put_utility 'title' /"Aggregating evi.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 751  put_utility 'title' /"Aggregating evt.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 785  put_utility 'title' /"Aggregating eco2d.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 13
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 819  put_utility 'title' /"Aggregating eco2i.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 853  put_utility 'title' /"Aggregating vtwr.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 887   
+ 888  *       First, convert tax rates into tax payments:
+ 889   
+ 890  rto(g,r)    = rto(g,r)*vom(g,r);
+ 891  rtf(f,j,r)  = rtf(f,j,r) * vfm(f,j,r);
+ 892  rtfd(i,g,r) = rtfd(i,g,r) * vdfm(i,g,r);
+ 893  rtfi(i,g,r) = rtfi(i,g,r) * vifm(i,g,r);
+ 894  rtms(i,r,s) = rtms(i,r,s)*((1-rtxs(i,r,s)) * vxmd(i,r,s) + sum(j,vtwr(j,i,r,s)));
+ 895  rtxs(i,r,s) = rtxs(i,r,s) * vxmd(i,r,s);
+ 896   
+ 897   
+ 898  *       Aggregate:
+ 899   
+ 900  put_utility 'title' /"Aggregating rto.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 934  put_utility 'title' /"Aggregating rtf.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+ 968  put_utility 'title' /"Aggregating rtfd.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1002  put_utility 'title' /"Aggregating rtfi.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1036  put_utility 'title' /"Aggregating rtxs.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1070  put_utility 'title' /"Aggregating rtms.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1104   
+1105  parameter profit;
+1106  profit(gg,rr) = vom_(gg,rr)
+****             $352    $141  $352
+**** LINE    111 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1107                  - sum(ii, vdfm_(ii,gg,rr) + rtfd_(ii,gg,rr))
+****                                $141     $352     $141     $352
+**** LINE    112 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1108                  - sum(ii, vifm_(ii,gg,rr) + rtfi_(ii,gg,rr));
+****                                $141     $352     $141     $352
+**** LINE    113 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1109   
+1110  profit(gg,rr) = vom_(gg,rr) - rto_(gg,rr)
+****             $352          $352    $141  $352
+**** LINE    115 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1111                  - sum(ii, vdfm_(ii,gg,rr) + rtfd_(ii,gg,rr))
+****                                         $352              $352
+**** LINE    116 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1112                  - sum(ii, vifm_(ii,gg,rr) + rtfi_(ii,gg,rr))
+****                                         $352              $352
+**** LINE    117 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1113                  - sum(ff, vfm_(ff,gg,rr)  + rtf_(ff,gg,rr));
+****                               $141     $352     $141     $352
+**** LINE    118 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 14
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1114  display profit;
+1115   
+1116   
+1117  *       Convert back to rates:
+1118   
+1119  rto_(gg,rr)$vom_(gg,rr) = rto_(gg,rr)/vom_(gg,rr);
+****           $352        $352          $352        $352
+**** LINE    124 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1120  rtf_(ff,jj,rr)$vfm_(ff,jj,rr)  = rtf_(ff,jj,rr) / vfm_(ff,jj,rr);
+****           $352,352       $352,352          $352,352         $352,352
+**** LINE    125 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1121  rtfd_(ii,gg,rr)$ vdfm_(ii,gg,rr) = rtfd_(ii,gg,rr) / vdfm_(ii,gg,rr);
+****               $352             $352              $352              $352
+**** LINE    126 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1122  rtfi_(ii,gg,rr)$ vifm_(ii,gg,rr) = rtfi_(ii,gg,rr) / vifm_(ii,gg,rr);
+****               $352             $352              $352              $352
+**** LINE    127 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1123  rtxs_(ii,rr,ss)$ vxmd_(ii,rr,ss) = rtxs_(ii,rr,ss) / vxmd_(ii,rr,ss);
+****            $352,352   $141  $352,352    $141  $352,352          $352,300
+**** LINE    128 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1124  rtms_(ii,rr,ss)$((1-rtxs_(ii,rr,ss)) * vxmd_(ii,rr,ss) + sum(jj,vtwr_(jj,ii,rr,ss)))
+****            $352,352            $352,352           $352,352     $352  $141,352,300
+**** LINE    129 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1125           = rtms_(ii,rr,ss)/((1-rtxs_(ii,rr,ss)) * vxmd_(ii,rr,ss) + sum(jj,vtwr_(jj,ii,rr,ss)));
+****                 $141  $352,352            $352,352           $352,352     $352     $352,300
+**** LINE    130 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1126   
+1127  esubd_(ii)$sum(mapi(i,ii), sum((j,r), vdfm(i,j,r)+vifm(i,j,r)))
+1128          = sum(mapi(i,ii), sum((j,r), vdfm(i,j,r)+vifm(i,j,r))*esubd(i)) /
+1129               sum(mapi(i,ii), sum((j,r), vdfm(i,j,r)+vifm(i,j,r)));
+1130  esubva_(jj)$sum(mapi(j,jj), sum((f,r), vfm(f,j,r)))
+****           $352           $352
+**** LINE    135 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1131          = sum(mapi(j,jj), sum((f,r), vfm(f,j,r)*esubva(j))) /
+****                        $352
+**** LINE    136 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1132                sum(mapi(j,jj), sum((f,r), vfm(f,j,r)));
+****                            $352
+**** LINE    137 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1133  esubm_(ii)$sum((r,mapi(i,ii)), vim(i,r))
+1134          = sum((r,mapi(i,ii)), vim(i,r)*esubm(i)) / sum((r,mapi(i,ii)), vim(i,r));
+1135   
+1136  etrae_(ff)$sum(mapf(f,ff)$sf(f), sum((j,r), vfm(f,j,r)))
+****                    $120,340
+**** LINE    141 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1137             = sum(mapf(f,ff)$sf(f), sum((j,r), vfm(f,j,r)*etrae(f))) /
+1138               sum(mapf(f,ff)$sf(f), sum((j,r), vfm(f,j,r)));
+1139   
+1140  parameter       vp(i,r) Value of private expenditure;
+1141  vp(i,r) = vdfm(i,"c",r)*(1+rtfd0(i,"c",r)) + vifm(i,"c",r)*(1+rtfi0(i,"c",r));
+1142   
+1143  eta_(ii,rr)$sum((mapr(r,rr),mapi(i,ii)),vp(i,r))
+****           $352            $352
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 15
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+**** LINE    148 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1144          = sum((mapr(r,rr),mapi(i,ii)),vp(i,r)*eta(i,r)) /
+****                         $352
+**** LINE    149 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1145            sum((mapr(r,rr),mapi(i,ii)),vp(i,r));
+****                         $352
+**** LINE    150 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1146  epsilon_(ii,rr)$sum((mapr(r,rr),mapi(i,ii)),vp(i,r))
+****               $352            $352
+**** LINE    151 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1147          = sum((mapr(r,rr),mapi(i,ii)),vp(i,r)*epsilon(i,r)) /
+****                         $352
+**** LINE    152 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1148            sum((mapr(r,rr),mapi(i,ii)),vp(i,r));
+****                         $352
+**** LINE    153 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1149   
+1150  loop(mapf(mf,ff), etrae_(ff) = +inf;);
+1151   
+1152  *---------------only for eppa-----------------------------------------------------------------------------------------------------------
+1153  parameters
+1154  SELAS_(*,layer,rr)      INITIAL SUBSTITUTION ELASTICITY MATRIX
+1155  esup_(*,rr)             fixed factor substitution elasticity
+1156  *delas                  Final demand elasticity between energy and non-energy composites
+1157  *sigtrn                 Elasticity between transport consumption and other consumption in final demand
+1158  d_elas_(rr)             top final demand substitution elasticity
+1159  d_elase_(rr)            substitution among energy
+1160  d_elaso_(rr)            substitution among otherind and enerint
+1161  d_elasa_(rr)            substitution between agriculure and the rest
+1162  ESUBE_(*,rr)            Elasticity of substitution between energy inputs
+1163  sigc_                   top level elasticity between energy consumption and gases
+1164  siggv_                  Elasticity of substitution for ghg in vintaged sectors
+1165  sigg_                   Elasticity of substitution for ghg
+1166  sigg0_                  Elasticity of substitution for ghg
+1167  sigu_                   top level transformation elasticity between production and urban gases
+1168  pnesta_                 production sectors nest a substitution elasticity
+1169  enesta_                 energy input to electricity sector nest a substitution elasticity
+1170  tnesta_                 hh transport substitution elasticity between roil and the rest of own-supplied transport
+1171  tnests_                 hh transport top nest elasticity (between purchased and own-supplied)
+1172  s_bc_(*,rr)             sectoral elasticity of substitution for black and organic carbon
+1173  bsigma_(rr)             Elasticity of substitution for biomass generation
+1174  boilsig_(rr)            Fixed factor elasticity for 2nd gen bio-oil
+1175  boilffg_(rr)            Fixed factor elasticity for 1st gen bio-oil
+1176  etag_(rr,*)             income elasticity of g(redefined??)
+1177  ***vdfmplusvifm_(irh,ii,rr)  base year vdfm plus vifm
+1178  **price_(irh,rr,t)      Armington price with Reimer-Hertel sectors
+1179  ***finalc_                      HH aggregated final consumption expenditure in billion US$
+1180  **finalcp_              per capita HH aggregate final consumption expenditure in thousand US$ divided by 100
+1181  **u_(rr,t)              AIDADS utility level
+1182  ***what_(irh,rr,t)      w hat
+1183  ***xhat_(irh,rr,t)      x hat
+1184  ***phia_(irh,rr,t)      phi in the AIDADS system
+1185  ***mbs_(irh,rr,t)       marginal budget share
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 16
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1186  ***elas_(irh,rr,t)      income elasticity with Reimer-Hertel sector
+1187  ***elastot_(irh,rr,t)   elas converted from individual to aggregated level
+1188  ***tha_(rr,t)           correction for income elasticities of other sectors
+1189  **alpha(irh)
+1190  **beta(irh)
+1191  **gamma(irh)
+1192  **price07_e4_(irh,rr)  base year real price levels from EPPA4 with base year 1997
+1193  usda_(rr,*)             USDA ICP income elasticities for 2005
+1194  wsigma_(rr)             Elasticity of substitution for wind generation
+1195  bsf_(*,rr)              backstop fixed factor substitution elasticity
+1196   
+1197  efe_(eec,*,rr)          Elasticity of substitution for ghg and energy-fe.tl (prod d)
+****         $120
+**** LINE    202 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1198  ene_(*,rr)              Elasticity of substitution for non-energy product-ne (prod d&z&dv)
+1199  efa_(fa,eec,rr) Elasticity of substitution for fixed factor and armington goods (prod d)
+1200  ****sigma_(rr)          Elasticity of substitution for nuclear energy
+1201  neta_(rr)               parameter used to calculate sigma-nuclear elasticity
+1202  ****hsigma_(rr) Elasticity of substitution for hydroelectric
+1203  heta_(rr)               parameter used to calculate hsigma-hydroelectric elasticity
+1204  esubi_(rr)              Elasticity of substitution for invesment
+1205  esb_(rr)                Elasticity of substitution for household transport
+1206  *eyt                    Elasticity of substitution for international transport
+1207  eeid_(eec,*,rr) Elasticity of substitution for conventional intermediate energy demand
+1208  eedf_(eec,rr)           Elasticity of substitution for conventional final energy demand
+1209  etedf_(eec,rr)          Elasticity of substitution for conventional final energy demand -- hh transport
+1210  eeid_ghg_(eec,*,rr)     Elasticity of substitution for energy demand inclusive of ghg -- intermediate
+1211  efd_ghg_(eec,*,rr)      Elasticity of substitution for energy demand inclusive of ghg -- final
+1212  etefd_ghg_(eec,*,rr)    Elasticity of substitution for energy demand inclusive of ghg -- hh transport
+1213   
+1214  err_(rr)                Elasticity of substitution for international tansport and import-rr.tl(prod m)
+1215  ehomm_(x,rr)            Elasticity of substitution for net imports of homogenous goods
+1216  ehomx_(x,rr)            Elasticity of substitution for net exports of homogenous goods
+1217  ebiom_f_(rr)            Elasticity of substitution for net imports of bio-oil
+1218  ebiom_i_(*,rr)          Elasticity of substitution for net imports of bio-oil
+1219  ebiox_(rr)              Elasticity of substitution for net exports of bio-oil
+1220  eed_(rr)                Elasticity of substitution for energy and dwelling goods(prod Z)
+1221  ew_(rr)         Elasticity of substitution for welfare
+1222  edv_(rr)                Elasticity of substitution for dv's other input(a)
+1223   
+1224  ecva_(bt,rr)            Elasticity of substitution for cva (prod eb)
+1225  efva_(bt,rr)            Elasticity of substitution for fva (prod eb)
+1226  egva_(bt,rr)            Elasticity of substitution for gva (prod eb)
+1227  etdva_(bt,rr)           Elasticity of substitution for tdva (prod eb)
+1228  egtd_(bt,rr)            Elasticity of substitution for cva (prod eb)
+1229  esva_(bt,rr)            Elasticity of substitution for sva (prod eb)
+1230  eeban_(rr)              Elasticity of substitution for eb-adv-nucl
+1231  eva_(bt,rr)             Elasticity of substitution for va (prod eb)
+1232   
+1233  ewiput_(rr)             Elasticity of substitution for eb-wind input-b
+1234  ebioput_(rr)            Elasticity of substitution for eb-bioe input-b
+1235  esiput_(rr)             Elasticity of substitution for eb-solar input-a
+1236  ebva_(rr)               Elasticity of substitution for eb-windbio input bio cap&lab-b
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 17
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1237  egb_(rr)                Elasticity of substitution for eb-windgas input gas cap&lab-b
+1238  egc_(rr)                Elasticity of substitution for eb-windgas input for carbon-c
+1239  egf_(rr)                Elasticity of substitution for eb-windgas input for carbon&va of gas-f
+1240  eob_(rr)                Elasticity of substitution for eb-biooil input armington goods-b
+1241  **** eb still have lots parameters not included
+1242   
+1243  eebv_(rr)               Elasticity of substitution for vintaged backstop production
+1244  eeqco2_(rr)             Elasticity of substitution for transforming carbon rights to ghg rights -- regional or regional to international
+1245  eeqghg_(ghg,rr)         Elasticity of substitution for transforming ghg rights to carbon rights -- regional or regional to international
+1246   
+1247  CH4_(rr,*)              global CH4      emissions in 2010 from edgar (Ktons)
+1248  CH4C_(rr,*)             global CH4      emissions in 2010 with combustion activity (K tons)
+1249  CH4N_(rr,*)             global CH4      emissions in 2010 with non-combustion activity (K tons)
+1250  N2O_(rr,*)              global N2O      emissions in 2010 from edgar (Ktons)
+1251  N2OC_(rr,*)             global NO2      emissions in 2010 with combustion activity (K tons)
+1252  N2ON_(rr,*)             global NO2      emissions in 2010 with non-combustion activity (K tons)
+1253  SF6_(rr,*)              global SF6      emissions in 2010 from edgar (K tons)
+1254  SF6C_(rr,*)             global SF6      emissions in 2010 with combustion activity (K tons)
+1255  SF6N_(rr,*)             global SF6      emissions in 2010 with non-combustion activity (K tons)
+1256  HFCs_(rr,*)             global HFCs     emissions in 2010 from edgar (K tons)
+1257  HFCsC_(rr,*)            global HFCs     emissions in 2010 with combustion activity (K tons)
+1258  HFCsN_(rr,*)            global HFCs     emissions in 2010 with non-combustion activity (K tons)
+1259  PFCs_(rr,*)             global PFCs     emissions in 2010 from edgar (K tons)
+1260  PFCsC_(rr,*)            global PFCs     emissions in 2010 with combustion activity (K tons)
+1261  PFCsN_(rr,*)            global PFCs     emissions in 2010 with non-combustion activity (K tons)
+1262  ;
+1263   
+1264  * Elasticities between non-elec and elec in cosumption, investment and
+1265  * government.
+1266   
+1267  *SCALARS
+1268  *       NOEEC          /1.0/
+1269  *       NOEEI          /1.0/
+1270  *       NOEEG          /1.0/
+1271  *       ESUBG Elasticity in government demand /0.5/;
+1272   
+      **** elastisity conversion
+      esubva_(jj)$sum(mapi(j,jj), sum((sf,r), vfm(sf,j,r)))
+              = sum(mapi(j,jj), sum((sf,r), vfm(sf,j,r)*esubva(j))) /
+                    sum(mapi(j,jj), sum((sf,r), vfm(sf,j,r)));
+1279   
+1280  *SELAS_(ggg,layer,rrr)  = sum((mapr(rrr,r),mapg(ggg,g)),SELAS(g,layer,r));
+1281  *SELAS_("hh",layer,rrr) = sum(mapr(rrr,r),SELAS("hh",layer,r));
+1282  SELAS_(ii,"smm",rr)$(sum((mapr(r,rr),mapg(i,ii)),vim(i,r)))
+****                   $352             $352
+**** LINE    287 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1283  = sum((mapr(r,rr),mapg(i,ii)),SELAS(i,"smm",r)*vim(i,r)) /sum((mapr(r,rr),mapg(i,ii)),vim(i,r));
+****                 $352                                                    $352
+**** LINE    288 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1284   
+1285  SELAS_(ii,"sdm",rr)$(sum((mapr(r,rr),mapi(i,ii)),sum (g,voam(i,g,r))))
+****                   $352             $352
+**** LINE    290 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 18
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1286  = sum((mapr(r,rr),mapi(i,ii)),SELAS(i,"sdm",r)*sum (g,voam(i,g,r))) /sum((mapr(r,rr),mapi(i,ii)),sum(g,voam(i,g,r)));
+****                 $352                                                               $352
+**** LINE    291 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1287   
+1288  SELAS_(gg,"l_k",rr)$(sum((mapr(r,rr),mapg(g,gg)),sum (f$mf(f),vfm(f,g,r))))
+****                   $352             $352
+**** LINE    293 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1289  = sum((mapr(r,rr),mapg(g,gg)),SELAS(g,"l_k",r)*sum (f$mf(f),vfm(f,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(f$mf(f),vfm(f,g,r)));
+****                 $352                                                                    $352
+**** LINE    294 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1290   
+1291  Selas_("hh","noe_el",rr)$sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,"c",r)))
+****                        $352            $352
+**** LINE    296 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1292  = sum((mapr(r,rr)),selas("hh","noe_el",r)*sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,"c",r))) /sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,"c",r)));
+****                 $352                                                                                       $352
+**** LINE    297 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1293   
+1294  Selas_(gg,"noe_el",rr)$sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r)))
+****                      $352            $352
+**** LINE    299 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1295  = sum((mapr(r,rr),mapg(g,gg)),selas(g,"noe_el",r)*sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r)));
+****                 $352                                                                                             $352
+**** LINE    300 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1296   
+1297  Selas_(gg,"e_kl",rr)$(agri(gg) and sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$(ec(ii) or ne(ii)),1)),voam(i,g,r))))
+****                    $352                          $352
+**** LINE    302 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1298  = sum((mapr(r,rr),mapg(g,gg)),selas(g,"e_kl",r)*sum(i$(sum (mapi(i,ii)$(ec(ii) or ne(ii)),1)),voam(i,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$(ec(ii) or ne(ii)),1)),voam(i,g,r)));
+****                 $352                                                                                                       $352
+**** LINE    303 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1299   
+1300  Selas_(gg,"e_kl",rr)$((eint(gg) or naenoe(gg)) and sum((mapr(r,rr),mapg(g,gg)),(sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r))+sum(f$mf(f),vfm(f,g,r)))))
+****                    $352                                          $352
+**** LINE    305 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1301  = sum((mapr(r,rr),mapg(g,gg)),selas(g,"e_kl",r)*(sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r))+sum(f$mf(f),vfm(f,g,r))))
+****                 $352
+**** LINE    306 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1302  /sum((mapr(r,rr),mapg(g,gg)),(sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r))+sum(f$mf(f),vfm(f,g,r))));
+****                $352
+**** LINE    307 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1303   
+1304  *esup_(ggg,rrr)         = sum((mapr(rrr,r),mapg(ggg,g)),esup(g,r));
+1305  esup_(gg,rr)$(agri(gg) and sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)-sum(mf,vfm(mf,g,r)))))
+****            $352                          $352
+**** LINE    310 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1306  = sum((mapr(r,rr),mapg(g,gg)),esup(g,r)*(vom(g,r)-sum(mf,vfm(mf,g,r)))) /sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)-sum(mf,vfm(mf,g,r))));
+****                 $352                                                                   $352
+**** LINE    311 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1307   
+1308  esup_(gg,rr)$((eint(gg)or naenoe(gg) or enoe(gg)) and sum((mapr(r,rr),mapg(g,gg)),(vom(g,r))))
+****            $352                                                     $352
+**** LINE    313 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 19
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1309  = sum((mapr(r,rr),mapg(g,gg)),esup(g,r)*(vom(g,r))) /sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)));
+****                 $352                                               $352
+**** LINE    314 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1310   
+1311  *d_elas_(rrr)           = sum(mapr(rrr,r),d_elas(r));
+1312  d_elas_(rr)$(sum((mapr(r,rr)),sum(i$(sum( mapi(i,ii)$nend(ii),1)),voam(i,"c",r))))
+****           $352             $352
+**** LINE    317 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1313  = sum((mapr(r,rr)),d_elas(r)*sum(i$(sum (mapi(i,ii)$nend(ii),1)),voam(i,"c",r))) /sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$nend(ii),1)),voam(i,"c",r)));
+****                 $352                                                                            $352
+**** LINE    318 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1314  *d_elase_(rrr)          =d_elas_(rrr);
+1315  *d_elaso_(rrr)          =d_elas_(rrr);
+1316  *d_elasa_(rrr)          =d_elas_(rrr);
+1317  *ESUBE_(ggg,rrr)                = sum((mapr(rrr,r),mapg(ggg,g)),ESUBE(g,r));
+1318  ESUBE_(gg,rr)$sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$enoe(ii),1)),voam(i,g,r)))
+****             $352            $352
+**** LINE    323 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1319  = sum((mapr(r,rr),mapg(g,gg)),ESUBE(g,r)*sum(i$(sum (mapi(i,ii)$enoe(ii),1)),voam(i,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$enoe(ii),1)),voam(i,g,r)));
+****                 $352                                                                                      $352
+**** LINE    324 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1320   
+1321  *sigc_(ghg,eec,rrr)     = sum((mapr(rrr,r),mape(eec,e)),sigc(ghg,e,r));
+1322  *sigg_(ghg,ggg,rrr)     = sum((mapr(rrr,r),mapg(ggg,g)),sigg(ghg,g,r));
+1323  *sigg_(ghg,"fd",rrr)    = sum((mapr(rrr,r)),sigg(ghg,"fd",r));
+1324  sigg_(ghg,"fd",rr)$(sum((mapr(r,rr)),vom("c",r)))
+****                  $352             $352
+**** LINE    329 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1325  = sum((mapr(r,rr)),sigg(ghg,"fd",r)*vom("c",r)) /sum((mapr(r,rr)),vom("c",r));
+****                 $352                                           $352
+**** LINE    330 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1326   
+1327  sigg_(ghg,ii,rr)$(agri(ii) and sum((mapr(r,rr),mapg(i,ii)),vom(i,r)))
+****                $352                          $352
+**** LINE    332 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1328  = sum((mapr(r,rr),mapg(i,ii)),sigg(ghg,i,r)*vom(i,r))/ sum((mapr(r,rr),mapg(i,ii)),vom(i,r));
+****                 $352                                                 $352
+**** LINE    333 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1329   
+1330  sigg_("n2o",gg,rr)$(agri(gg) and sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)-sum(mf,vfm(mf,g,r)))))
+****                  $352                          $352
+**** LINE    335 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1331  = sum((mapr(r,rr),mapg(g,gg)),sigg("n2o",g,r)*(vom(g,r)-sum(mf,vfm(mf,g,r)))) /sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)-sum(mf,vfm(mf,g,r))));
+****                 $352                                                                         $352
+**** LINE    336 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1332   
+1333  sigg_(ghg,gg,rr)$((eint(gg)or naenoe(gg)) and sum((mapr(r,rr),mapg(g,gg)),(vom(g,r))))
+****                $352                                         $352
+**** LINE    338 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1334  = sum((mapr(r,rr),mapg(g,gg)),sigg(ghg,g,r)*(vom(g,r))) /sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)));
+****                 $352                                                   $352
+**** LINE    339 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1335   
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 20
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1336  sigg_(ghg,ii,rr)$((enoe(ii)) and sum((mapr(r,rr),mapg(i,ii)),(vom(i,r)-sum(sf,vfm(sf,i,r)))))
+****                $352                            $352
+**** LINE    341 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1337  = sum((mapr(r,rr),mapg(i,ii)),sigg(ghg,i,r)*(vom(i,r)-sum(sf,vfm(sf,i,r))))/ sum((mapr(r,rr),mapg(i,ii)),(vom(i,r)-sum(sf,vfm(sf,i,r))));
+****                 $352                                                                       $352
+**** LINE    342 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1338   
+1339   
+1340  *sigg0_(ghg,uu,rrr)     =sigg(ghg,uu,rrr);
+1341  *siggv_(ggg,rrr)                = sum((mapr(rrr,r),mapg(ggg,g)),siggv(g,r));
+1342  *sigu_(ggg,rrr)         = sum((mapr(rrr,r),mapg(ggg,g)),sigu(g,r));
+1343  *sigu_("fd",rrr)                = sum((mapr(rrr,r)),sigu("fd",r));
+1344  **below only for non-electricity--------------------------------------------
+1345  sigu_(ii,rr)$(sum((mapr(r,rr),mapg(i,ii)),vom(i,r)))
+****            $352             $352
+**** LINE    350 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1346  = sum((mapr(r,rr),mapg(i,ii)),sigu(i,r)*vom(i,r))/ sum((mapr(r,rr),mapg(i,ii)),vom(i,r));
+****                 $352                                             $352
+**** LINE    351 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1347  *----------------------------------------------------------------------------
+1348  *s_bc_(ggg,rrr)         = sum((mapr(rrr,r),mapg(ggg,g)),s_bc(g,r));
+1349  *bsigma_(rrr)           = sum(mapr(rrr,r),bsigma(r));
+1350  *boilsig_(rrr)          = sum(mapr(rrr,r),boilsig(r));
+1351  *boilffg_(rrr)          = sum(mapr(rrr,r),boilffg(r));
+1352  *pnesta_(ggg,rrr)       = sum((mapr(rrr,r),mapg(ggg,g)),pnesta(g,r));
+1353  pnesta_(ii,rr)$(agri(ii) and sum((mapr(r,rr),mapg(i,ii)),vom(i,r)))
+****              $352                          $352
+**** LINE    358 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1354  = sum((mapr(r,rr),mapg(i,ii)),pnesta(i,r)*vom(i,r))/ sum((mapr(r,rr),mapg(i,ii)),vom(i,r));
+****                 $352                                               $352
+**** LINE    359 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1355   
+1356  pnesta_(ii,rr)$((eint(ii) or naenoe(ii) or enoe(ii)) and sum((mapr(r,rr),mapg(i,ii)),(vom(i,r)-sum(sf,vfm(sf,i,r)))))
+****              $352                                                      $352
+**** LINE    361 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1357  = sum((mapr(r,rr),mapg(i,ii)),pnesta(i,r)*(vom(i,r)-sum(sf,vfm(sf,i,r))))/ sum((mapr(r,rr),mapg(i,ii)),(vom(i,r)-sum(sf,vfm(sf,i,r))));
+****                 $352                                                                     $352
+**** LINE    362 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1358   
+1359  *pnesta_("nucl",rrr)    = sum(mapr(rrr,r),pnesta("nucl",r));
+1360   
+1361  *pnesta_("hydr",rrr)    = sum(mapr(rrr,r),pnesta("hydr",r));
+1362  *enesta_(eec,rrr)       = sum((mapr(rrr,r),mape(eec,e)),enesta(e,r));
+1363  enesta_(eec,rr)$(sum((mapr(r,rr),mape(e,eec)),vom(e,r)))
+****               $352             $352  $120,340
+**** LINE    368 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1364  = sum((mapr(r,rr),mape(e,eec)),enesta(e,r)*vom(e,r))/sum((mapr(r,rr),mape(e,eec)),vom(e,r));
+****                 $352                                               $352
+**** LINE    369 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1365   
+1366  *tnesta_(rrr)           = sum(mapr(rrr,r),tnesta(r));
+1367  *tnests_(rrr)           = sum(mapr(rrr,r),tnests(r));
+1368  *etag_(rrr,ggg)         = sum((mapr(rrr,r),mapg(ggg,g)),etag(r,g));
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 21
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1369  **price_(irh,rrr,t) = sum(mapr(rrr,r),price(irh,r,t));
+1370  **finalcp_(rrr,t) = sum(mapr(rrr,r),finalcp(r,t));
+1371  **u_(rrr,t) = sum(mapr(rrr,r),u(r,t));
+1372  *usda_(rrr,iii)         = sum((mapr(rrr,r),mapi(iii,i)),usda(r,i));
+1373  *wsigma_(rrr)           = sum(mapr(rrr,r),wsigma(r));
+1374  *bsf_(uu,rrr)           = sum(mapr(rrr,r),bsf(uu,r));
+1375   
+1376  *efe_(eec,ggg,rrr)      = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),efe(e,g,r));
+1377  *ene_(ggg,rrr)          = sum((mapr(rrr,r),mapg(ggg,g)),ene(g,r));
+1378  ene_(gg,rr)$sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$ne(ii),1)),voam(i,g,r)))
+****           $352            $352
+**** LINE    383 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1379  = sum((mapr(r,rr),mapg(g,gg)),ene(g,r)*sum(i$(sum (mapi(i,ii)$ne(ii),1)),voam(i,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$ne(ii),1)),voam(i,g,r)));
+****                 $352                                                                                  $352
+**** LINE    384 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1380   
+1381  *efa_(fa,eec,rrr)       = sum((mapr(rrr,r),mape(eec,e)),efa(fa,e,r));
+1382  *neta_(rrr)             = sum(mapr(rrr,r),neta(r));
+1383   
+1384  *heta_(rrr)             = sum(mapr(rrr,r),heta(r));
+1385  *esubi_(rrr)            = sum(mapr(rrr,r),esubi(r));
+1386  esubi_(rr)$(sum(mapr(r,rr),vom("i",r)))
+****          $352            $352
+**** LINE    391 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1387  = sum(mapr(r,rr),esubi(r)*vom("i",r))/sum(mapr(r,rr),vom("i",r));
+****                $352                                $352
+**** LINE    392 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1388   
+1389  *esb_(rrr)              = sum(mapr(rrr,r),esb(r));
+1390  *eeid_(eec,ggg,rrr)     = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),eeid(e,g,r));
+1391  *eedf_(eec,rrr)         = sum((mapr(rrr,r),mape(eec,e)),eedf(e,r));
+1392  *etedf_(eec,rrr)                = sum((mapr(rrr,r),mape(eec,e)),etedf(e,r));
+1393  *eeid_ghg_(eec,ggg,rrr) = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),eeid_ghg(e,g,r));
+1394  *efd_ghg_(eec,ggg,rrr)  = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),efd_ghg(e,g,r));
+1395  *etefd_ghg_(eec,ggg,rrr)        = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),etefd_ghg(e,g,r));
+1396   
+1397  *err_(rrr)              = sum(mapr(rrr,r),err(r));
+1398  err_(rr)$(sum(mapr(r,rr),(sum((i,s),vxmd(i,s,r))+sum((j,i,s),vtwr(j,i,s,r)))))
+****        $352            $352
+**** LINE    403 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1399  = sum(mapr(r,rr),err(r)*(sum((i,s),vxmd(i,s,r))+sum((j,i,s),vtwr(j,i,s,r))))/ sum(mapr(r,rr),(sum((i,s),vxmd(i,s,r))+sum((j,i,s),vtwr(j,i,s,r)))) ;
+****                $352                                                                        $352
+**** LINE    404 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1400   
+1401  *ehomm_(x,rrr)          = sum(mapr(rrr,r),ehomm(x,r));
+1402  *ehomx_(x,rrr)          = sum(mapr(rrr,r),ehomx(x,r));
+1403  *ebiom_f_(rrr)          = sum(mapr(rrr,r),ebiom_f(r));
+1404  *ebiom_i_(ggg,rrr)      = sum((mapr(rrr,r),mapg(ggg,g)),ebiom_i(g,r));
+1405  *ebiox_(rrr)            = sum(mapr(rrr,r),ebiox(r));
+1406  *eed_(rrr)              = sum(mapr(rrr,r),eed(r));
+1407  eed_(rr)$sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$(ec(ii) or dwe(ii)),1)),voam(i,"c",r)))
+****        $352            $352
+**** LINE    412 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 22
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1408  = sum((mapr(r,rr)),eed(r)*sum(i$(sum (mapi(i,ii)$(ec(ii) or dwe(ii)),1)),voam(i,"c",r))) /sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$(ec(ii) or dwe(ii)),1)),voam(i,"c",r)));
+****                 $352                                                                                    $352
+**** LINE    413 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1409  *ew_(rrr)               = sum(mapr(rrr,r),ew(r));
+1410  ew_(rr)$(sum(mapr(r,rr),w0(r)))
+****       $352            $352
+**** LINE    415 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1411  = sum(mapr(r,rr),ew(r)*w0(r))/sum(mapr(r,rr),w0(r));
+****                $352                        $352
+**** LINE    416 INPUT       d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+1412  *edv_(rrr)              = sum(mapr(rrr,r),edv(r));
+1413  *ecva_(bt,rrr)          = sum(mapr(rrr,r),ecva(bt,r));
+1414  *efva_(bt,rrr)          = sum(mapr(rrr,r),efva(bt,r));
+1415  *egva_(bt,rrr)          = sum(mapr(rrr,r),egva(bt,r));
+1416  *etdva_(bt,rrr)         = sum(mapr(rrr,r),etdva(bt,r));
+1417  *egtd_(bt,rrr)          = sum(mapr(rrr,r),egtd(bt,r));
+1418  *esva_(bt,rrr)          = sum(mapr(rrr,r),esva(bt,r));
+1419  *eeban_(rrr)            = sum(mapr(rrr,r),eeban(r));
+1420  *eva_(bt,rrr)           = sum(mapr(rrr,r),eva(bt,r));
+1421  *ewiput_(rrr)           = sum(mapr(rrr,r),ewiput(r));
+1422  *ebioput_(rrr)          = sum(mapr(rrr,r),ebioput(r));
+1423  *esiput_(rrr)           = sum(mapr(rrr,r),esiput(r));
+1424  *ebva_(rrr)             = sum(mapr(rrr,r),ebva(r));
+1425  *egb_(rrr)              = sum(mapr(rrr,r),egb(r));
+1426  *egc_(rrr)              = sum(mapr(rrr,r),egc(r));
+1427  *egf_(rrr)              = sum(mapr(rrr,r),egf(r));
+1428  *eob_(rrr)              = sum(mapr(rrr,r),eob(r));
+1429   
+1430   
+1431  *eebv_(rrr)             = sum(mapr(rrr,r),eebv(r));
+1432  *eeqco2_(rrr)           = sum(mapr(rrr,r),eeqco2(r));
+1433  *eeqghg_(ghg,rrr)       = sum(mapr(rrr,r),eeqghg(ghg,r));
+1434   
+1435  *aggregation for ghg data
+1436   
+GDXIN   d:\mit_hc\gams\gtap9_201610\gtap9\data11\GtapGhg2010.gdx
+--- LOAD  CH4 = 1:CH4
+--- LOAD  CH4C = 2:CH4C
+--- LOAD  CH4N = 3:CH4N
+--- LOAD  N2O = 4:N2O
+--- LOAD  N2OC = 5:N2OC
+--- LOAD  N2ON = 6:N2ON
+--- LOAD  SF6 = 7:SF6
+--- LOAD  SF6C = 8:SF6C
+--- LOAD  SF6N = 9:SF6N
+--- LOAD  HFCs = 10:HFCs
+--- LOAD  HFCsC = 11:HFCsC
+--- LOAD  HFCsN = 12:HFCsN
+--- LOAD  PFCs = 13:PFCs
+--- LOAD  PFCsC = 14:PFCsC
+--- LOAD  PFCsN = 15:PFCsN
+1439   
+1440  put_utility 'title' /"Aggregating CH4.";
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 23
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1474   
+1475  put_utility 'title' /"Aggregating CH4C.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1509   
+1510  put_utility 'title' /"Aggregating CH4N.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1544   
+1545  put_utility 'title' /"Aggregating N2O.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1579   
+1580  put_utility 'title' /"Aggregating N2OC.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1614  put_utility 'title' /"Aggregating N2ON.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1648   
+1649  put_utility 'title' /"Aggregating SF6.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1683   
+1684  put_utility 'title' /"Aggregating SF6C.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1718  put_utility 'title' /"Aggregating SF6N.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1752   
+1753  put_utility 'title' /"Aggregating HFCs.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1787  put_utility 'title' /"Aggregating HFCsC.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1821  put_utility 'title' /"Aggregating HFCsN.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1855   
+1856  put_utility 'title' /"Aggregating PFCs.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1890  put_utility 'title' /"Aggregating PFCsC.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1924  put_utility 'title' /"Aggregating PFCsN.";
+BATINCLUDE d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+1958   
+1959   
+1960   
+1961   
+1962   
+1964   
+1965  put_utility 'title' /"Unloading dataset.";
+1966  execute_unload '..\data11\eppa_TW.gdx',
+1967          gg=g, rr=r, ff=f, ii=i,
+1968          vfm_=vfm, vdfm_=vdfm, vifm_=vifm,vxmd_=vxmd, vst_=vst, vtwr_=vtwr,
+1969          rto_=rto, rtf_=rtf, rtfd_=rtfd, rtfi_=rtfi, rtxs_=rtxs, rtms_=rtms,
+1970          evd_=evd, evi_=evi, evt_=evt, eco2d_=eco2d, eco2i_=eco2i,
+1971          esubd_=esubd, esubva_=esubva, esubm_=esubm, etrae_=etrae, eta_=eta, epsilon_=epsilon,
+1972  eec=e, x, ghg, bt, fa, layer,
+1973  CH4_ =CH4,
+1974  CH4C_ =CH4C,
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 24
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+1975  CH4N_ =CH4N,
+1976  N2O_ =N2O,
+1977  N2OC_ =N2OC,
+1978  N2ON_ =N2ON,
+1979  SF6_ =SF6,
+1980  SF6C_ =SF6C,
+1981  SF6N_ =SF6N,
+1982  HFCs_ =HFCs,
+1983  HFCsC_ =HFCsC,
+1984  HFCsN_ =HFCsN,
+1985  PFCs_ =PFCs,
+1986  PFCsC_ =PFCsC,
+1987  PFCsN_ =PFCsN ,
+1988   
+1989  SELAS_          =       SELAS,
+1990  esup_           =       esup,
+1991  delas,
+1992  sigtrn,
+1993  d_elas_         =       d_elas,
+1994  *d_elase_       =       d_elase,
+1995  **d_elaso_      =       d_elaso,
+1996  *d_elasa_       =       d_elasa,
+1997  ESUBE_          =       ESUBE,
+1998  *sigc_          =       sigc,
+1999  *siggv_         =       siggv,
+2000  sigg_           =       sigg,
+2001  *sigg0_         =       sigg0,
+2002  sigu_           =       sigu,
+2003  pnesta_         =       pnesta,
+2004  enesta_         =       enesta,
+2005  *tnesta_                =       tnesta,
+2006  *tnests_                =       tnests,
+2007  *s_bc_          =       s_bc,
+2008  *bsigma_                =       bsigma,
+2009  *boilsig_       =       boilsig,
+2010  *boilffg_       =       boilffg,
+2011  *etag_          =       etag,
+2012   
+2013  *usda_          =       usda,
+2014  *wsigma_                =       wsigma,
+2015  *bsf_           =       bsf,
+2016   
+2017  *efe_           =       efe,
+2018  ene_            =       ene,
+2019  *efa_           =       efa,
+2020  *neta_          =       neta,
+2021  *heta_          =       heta,
+2022  esubi_          =       esubi,
+2023  *esb_           =       esb,
+2024  eyt,
+2025  *eeid_          =       eeid,
+2026  *eedf_          =       eedf,
+2027  *etedf_         =       etedf,
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 25
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+2028  *eeid_ghg_      =       eeid_ghg,
+2029  *efd_ghg_       =       efd_ghg,
+2030  *etefd_ghg_     =       etefd_ghg,
+2031   
+2032  err_            =       err,
+2033  *ehomm_         =       ehomm,
+2034  *ehomx_         =       ehomx,
+2035  *ebiom_f_       =       ebiom_f,
+2036  *ebiom_i_       =       ebiom_i,
+2037  *ebiox_         =       ebiox,
+2038  eed_            =       eed,
+2039  ew_             =       ew,
+2040  *edv_           =       edv,
+2041   
+2042  *ecva_          =       ecva,
+2043  *efva_          =       efva,
+2044  *egva_          =       egva,
+2045  *etdva_         =       etdva,
+2046  *egtd_          =       egtd,
+2047  *esva_          =       esva,
+2048  *eeban_         =       eeban,
+2049  *eva_           =       eva,
+2050   
+2051  *ewiput_                =       ewiput,
+2052  *ebioput_       =       ebioput,
+2053  *esiput_                =       esiput,
+2054  *ebva_          =       ebva,
+2055  *egb_           =       egb,
+2056  *egc_           =       egc,
+2057  *egf_           =       egf,
+2058  *eob_           =       eob,
+2059   
+2060   
+2061  *eebv_          =       eebv,
+2062  *eeqco2_                =       eeqco2,
+2063  *eeqghg_                =       eeqghg,
+2064   
+2065  *NOEEC,
+2066  *NOEEI,
+2067  *NOEEG,
+2068  ESUBG;
+2069   
+2070  *---------------end of eppa----------------------------------------------------------------------------------------------------------------------------
+2071  put_utility 'title' /"All done with aggregation.";
+EXIT d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 26
+GAMS Code to Read a GTAP 9 Dataset
+Error Messages
+
+
+120  Unknown identifier entered as set
+140  Unknown symbol
+141  Symbol declared but no values have been assigned. Check for missing
+        data definition, assignment, data loading or implicit assignment
+        via a solve statement.
+        A wild shot: You may have spurious commas in the explanatory
+        text of a declaration. Check symbol reference list.
+157  No known set found in alias list
+158  No aliased symbol found
+171  Domain violation for set
+282  Unable to open include file
+300  Remaining errors not printed for this line
+340  A label/element with the same name exist. You may have forgotten
+        to quote a label/element reference. For example,
+        set i / a,b,c /; parameter x(i); x('a') = 10;
+352  Set has not been initialized
+406  More than one key set (known set) in alias statement
+
+**** 215 ERROR(S)   0 WARNING(S)
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 27
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+     2        8 INCLUDE        1       8  .d:\mit_hc\gams\gtap9_201610\gtap9\build\gtap9data.gms
+     3       22 IF EXIST       2      14  .d:\mit_hc\gams\gtap9_201610\gtap9\build\filter11_001.gdx
+     4       22 GDXIN          2      14  .d:\mit_hc\gams\gtap9_201610\gtap9\build\filter11_001.gdx
+     5       23 IF EXIST       2      15  .d:\mit_hc\gams\gtap9_201610\gtap9\build\filter11_001.gdx
+     6      193 GDXIN          2     185  .d:\mit_hc\gams\gtap9_201610\gtap9\data11\elasticity.gdx
+     7      427 EXIT           2     419  .d:\mit_hc\gams\gtap9_201610\gtap9\build\gtap9data.gms
+     8      480 BATINCLUDE     1      61  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+     9      512 EXIT           8      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    10      514 BATINCLUDE     1      63  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    11      546 EXIT          10      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    12      548 BATINCLUDE     1      65  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    13      580 EXIT          12      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    14      582 BATINCLUDE     1      67  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    15      614 EXIT          14      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    16      616 BATINCLUDE     1      69  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    17      648 EXIT          16      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    18      650 BATINCLUDE     1      71  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    19      682 EXIT          18      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    20      684 BATINCLUDE     1      73  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    21      716 EXIT          20      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    22      718 BATINCLUDE     1      75  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    23      750 EXIT          22      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    24      752 BATINCLUDE     1      77  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    25      784 EXIT          24      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    26      786 BATINCLUDE     1      79  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    27      818 EXIT          26      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    28      820 BATINCLUDE     1      81  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    29      852 EXIT          28      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    30      854 BATINCLUDE     1      83  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    31      886 EXIT          30      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    32      901 BATINCLUDE     1      98  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    33      933 EXIT          32      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    34      935 BATINCLUDE     1     100  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    35      967 EXIT          34      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    36      969 BATINCLUDE     1     102  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    37     1001 EXIT          36      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    38     1003 BATINCLUDE     1     104  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    39     1035 EXIT          38      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    40     1037 BATINCLUDE     1     106  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    41     1069 EXIT          40      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    42     1071 BATINCLUDE     1     108  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    43     1103 EXIT          42      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    44     1437 GDXIN          1     442  d:\mit_hc\gams\gtap9_201610\gtap9\data11\GtapGhg2010.gdx
+    45     1441 BATINCLUDE     1     446  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    46     1473 EXIT          45      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    47     1476 BATINCLUDE     1     449  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    48     1508 EXIT          47      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    49     1511 BATINCLUDE     1     452  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    50     1543 EXIT          49      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    51     1546 BATINCLUDE     1     455  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/06/16 10:40:06 Page 28
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+    52     1578 EXIT          51      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    53     1581 BATINCLUDE     1     458  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    54     1613 EXIT          53      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    55     1615 BATINCLUDE     1     460  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    56     1647 EXIT          55      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    57     1650 BATINCLUDE     1     463  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    58     1682 EXIT          57      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    59     1685 BATINCLUDE     1     466  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    60     1717 EXIT          59      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    61     1719 BATINCLUDE     1     468  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    62     1751 EXIT          61      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    63     1754 BATINCLUDE     1     471  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    64     1786 EXIT          63      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    65     1788 BATINCLUDE     1     473  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    66     1820 EXIT          65      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    67     1822 BATINCLUDE     1     475  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    68     1854 EXIT          67      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    69     1857 BATINCLUDE     1     478  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    70     1889 EXIT          69      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    71     1891 BATINCLUDE     1     480  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    72     1923 EXIT          71      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    73     1925 BATINCLUDE     1     482  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    74     1957 EXIT          73      32  .d:\mit_hc\gams\gtap9_201610\gtap9\build\aggr.gms
+    75     2072 EXIT           1     597  d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+
+
+COMPILATION TIME     =        0.640 SECONDS     85 MB  24.6.1 r55820 WEX-WEI
+
+
+USER: Shih-Mo Lin                                    H160307:0527AO-WIN
+      Chung Yuan Christian University, Dept. of International TrDC10738
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      d:\mit_hc\gams\gtap9_201610\gtap9\build\gtapaggr.gms
+Output     d:\mit_hc\gams\gtap9_201610\gtap9\build\eppa_TW.gdx
+
+**** USER ERROR(S) ENCOUNTERED

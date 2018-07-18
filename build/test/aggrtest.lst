@@ -1,0 +1,2134 @@
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/13/16 12:41:02 Page 1
+Aggregation Program for the GTAP9 Database
+C o m p i l a t i o n
+
+
+   2   
+   6   
+INCLUDE    d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\gtap9data.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/13/16 12:41:02 Page 2
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+  10   
+  12   
+  13  scalar nd       Number of decimals /0/;
+  14  abort$(nd<>round(nd)) "Number of decimals must be an integer";
+  15   
+  20   
+  21  set     g(*)    Goods plus C and G;
+GDXIN   d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\filtertest.gdx
+--- LOAD  g = 3:g
+  25   
+  26  set     i(g)    Goods
+  27          f(*)    Factors;
+--- LOAD  f = 5:f
+--- LOAD  i = 4:i
+  30  set r(*)        Regions;
+--- LOAD  r = 6:r
+  32   
+  33   
+  34  set     rnum(r) Numeraire region,
+  35          sf(f)   Sluggish primary factors (sector-specific),
+  36          mf(f)   Mobile primary factors;
+  37   
+  38  alias (r,s), (i,j);
+  39   
+  40  display r;
+  41  parameters
+  42          vfm(f,g,r)      Endowments - Firms' purchases at market prices,
+  43          vdfm(i,g,r)     Intermediates - firms' domestic purchases at market prices,
+  44          vifm(i,g,r)     Intermediates - firms' imports at market prices,
+  45          vxmd(i,r,s)     Trade - bilateral exports at market prices,
+  46          vst(i,r)        Trade - exports for international transportation
+  48          vtwr(i,j,r,s)   Trade - Margins for international transportation at world prices;
+  49   
+--- LOAD  vfm = 12:vfm
+--- LOAD  vdfm = 13:vdfm
+--- LOAD  vifm = 14:vifm
+--- LOAD  vxmd = 15:vxmd
+--- LOAD  vst = 16:vst
+--- LOAD  vtwr = 17:vtwr
+  52   
+  53  if (nd>0,
+  54          vfm(f,g,r) = vfm(f,g,r)$round(vfm(f,g,r),nd);
+  55          vdfm(i,g,r) = vdfm(i,g,r)$round(vdfm(i,g,r),nd);
+  56          vifm(i,g,r) = vifm(i,g,r)$round(vifm(i,g,r),nd);
+  57          vxmd(i,r,s) = vxmd(i,r,s)$round(vxmd(i,r,s),nd);
+  58          vst(i,r) = vst(i,r)$round(vst(i,r),nd);
+  59          vtwr(i,j,r,s) = vtwr(i,j,r,s)$round(vtwr(i,j,r,s),nd);
+  61  );
+  62   
+  63  parameter
+  64          evt(i,r,r)      Volume of energy trade (mtoe),
+  65          evd(i,g,r)      Domestic energy use (mtoe),
+  66          evi(i,g,r)      Imported energy use (mtoe),
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/13/16 12:41:02 Page 3
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+  67          eco2d(i,g,r)    CO2 emissions in domestic fuels - Mt CO2",
+  68          eco2i(i,g,r)    CO2 emissions in foreign fuels - Mt CO2";
+  69   
+--- LOAD  evd = 19:evd
+--- LOAD  evi = 20:evi
+--- LOAD  evt = 18:evt
+--- LOAD  eco2d = 21:eco2d
+--- LOAD  eco2i = 22:eco2i
+  71  if (nd>0,
+  72          evt(i,r,s)  = evt(i,r,s)$round(evt(i,r,s), nd);
+  73          evd(i,g,r) = evd(i,g,r)$round(evd(i,g,r), nd);
+  74          evi(i,g,r) = evi(i,g,r)$round(evi(i,g,r), nd);
+  75          eco2d(i,g,r) = eco2d(i,g,r)$round(eco2d(i,g,r), nd);
+  76          eco2i(i,g,r) = eco2i(i,g,r)$round(eco2i(i,g,r), nd);
+  77  );
+  78   
+  79  parameter
+  80          rto(g,r)        Output (or income) subsidy rates
+  81          rtf(f,g,r)      Primary factor and commodity rates taxes
+  82          rtfd(i,g,r)     Firms domestic tax rates
+  83          rtfi(i,g,r)     Firms' import tax rates
+  84          rtxs(i,r,s)     Export subsidy rates
+  86          rtms(i,r,s)     Import taxes rates;
+  87   
+--- LOAD  rto = 23:rto
+--- LOAD  rtf = 24:rtf
+--- LOAD  rtfd = 25:rtfd
+--- LOAD  rtfi = 26:rtfi
+--- LOAD  rtxs = 27:rtxs
+--- LOAD  rtms = 28:rtms
+  90   
+  91  if (nd>0,
+  92          rto(g,r) = rto(g,r)$round(rto(g,r),nd);
+  93          rtf(f,g,r) = rtf(f,g,r)$round(rtf(f,g,r),nd);
+  94          rtfd(i,g,r) = rtfd(i,g,r)$round(rtfd(i,g,r),nd);
+  95          rtfi(i,g,r) = rtfi(i,g,r)$round(rtfi(i,g,r),nd);
+  96          rtxs(i,r,s) = rtxs(i,r,s)$round(rtxs(i,r,s),nd);
+  97          rtms(i,r,s) = rtms(i,r,s)$round(rtms(i,r,s),nd);
+  99  );
+ 100  parameter
+ 101          esubd(i)        Elasticity of substitution (M versus D),
+ 102          esubva(g)       Elasticity of substitution between factors
+ 103          esubm(i)        Intra-import elasticity of substitution,
+ 104          etrae(f)        Elasticity of transformation,
+ 105          eta(i,r)        Income elasticity of demand,
+ 106          epsilon(i,r)    Own-price elasticity of demand;
+ 107   
+--- LOAD  esubd = 29:esubd
+--- LOAD  esubva = 30:esubva
+--- LOAD  esubm = 31:esubm
+--- LOAD  etrae = 32:etrae
+--- LOAD  eta = 33:eta
+--- LOAD  epsilon = 34:epsilon
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/13/16 12:41:02 Page 4
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 109   
+ 110  *       Declare some intermediate arrays which are required to
+ 111  *       evaluate tax rates:
+ 112   
+ 113  parameter       vdm(g,r)        Aggregate demand for domestic output,
+ 114                  vom(g,r)        Total supply at market prices;
+ 115   
+ 116  vdm(i,r) = sum(g, vdfm(i,g,r));
+ 117  vom(i,r) = vdm(i,r) + sum(s, vxmd(i,r,s)) + vst(i,r);
+ 118   
+ 119  parameter
+ 120          rtf0(f,g,r)     Primary factor and commodity rates taxes
+ 121          rtfd0(i,g,r)    Firms domestic tax rates
+ 122          rtfi0(i,g,r)    Firms' import tax rates
+ 123          rtxs0(i,r,s)    Export subsidy rates
+ 124          rtms0(i,r,s)    Import taxes rates;
+ 125   
+ 126  rtf0(f,g,r) = rtf(f,g,r);
+ 127  rtfd0(i,g,r) = rtfd(i,g,r);
+ 128  rtfi0(i,g,r) = rtfi(i,g,r);
+ 129  rtxs0(i,r,s) = rtxs(i,r,s);
+ 130  rtms0(i,r,s) = rtms(i,r,s);
+ 131   
+ 132  parameter       pvxmd(i,s,r)    Import price (power of benchmark tariff)
+ 133                  pvtwr(i,s,r)    Import price for transport services;
+ 134   
+ 135  pvxmd(i,s,r) = (1+rtms0(i,s,r)) * (1-rtxs0(i,s,r));
+ 136  pvtwr(i,s,r) = 1+rtms0(i,s,r);
+ 137   
+ 138  parameter
+ 139          vtw(j)          Aggregate international transportation services,
+ 140          vpm(r)          Aggregate private demand,
+ 141          vgm(r)          Aggregate public demand,
+ 142          vim(i,r)        Aggregate imports,
+ 143          evom(f,r)       Aggregate factor endowment at market prices,
+ 144          vb(*)           Current account balance;
+ 145   
+ 146  vtw(j) = sum(r, vst(j,r));
+ 147  vom("c",r) = sum(i, vdfm(i,"c",r)*(1+rtfd0(i,"c",r)) + vifm(i,"c",r)*(1+rtfi0(i,"c",r)))/(1-rto("c",r));
+ 148  vom("g",r) = sum(i, vdfm(i,"g",r)*(1+rtfd0(i,"g",r)) + vifm(i,"g",r)*(1+rtfi0(i,"g",r)))/(1-rto("g",r));
+ 149  vom("i",r) = sum(i, vdfm(i,"i",r)*(1+rtfd0(i,"i",r)) + vifm(i,"i",r)*(1+rtfi0(i,"i",r)))/(1-rto("i",r));
+ 150   
+ 151  vdm("c",r) = vom("c",r);
+ 152  vdm("g",r) = vom("g",r);
+ 153  vim(i,r) =  sum(g, vifm(i,g,r));
+ 154  evom(f,r) = sum(g, vfm(f,g,r));
+ 155  vb(r) = vom("c",r) + vom("g",r) + vom("i",r)
+ 156          - sum(f, evom(f,r))
+ 157          - sum(g,  vom(g,r)*rto(g,r))
+ 158          - sum(g,  sum(i, vdfm(i,g,r)*rtfd(i,g,r) + vifm(i,g,r)*rtfi(i,g,r)))
+ 159          - sum(g,  sum(f, vfm(f,g,r)*rtf(f,g,r)))
+ 160          - sum((i,s), rtms(i,s,r) *  (vxmd(i,s,r) * (1-rtxs(i,s,r)) + sum(j,vtwr(j,i,s,r))))
+ 161          + sum((i,s), rtxs(i,r,s) * vxmd(i,r,s));
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/13/16 12:41:02 Page 5
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 162   
+ 163  vb("chksum") = sum(r, vb(r));
+ 164  display vb;
+ 165   
+ 166  *       Determine which factors are sector-specific
+ 167   
+ 168  mf(f) = yes$(1/etrae(f)=0);
+ 169  sf(f) = yes$(1/etrae(f)>0);
+ 170  display mf,sf;
+ 171   
+ 172  parameter       mprofit Zero profit for m,
+ 173                  yprofit Zero profit for y;
+ 174   
+ 175  mprofit(i,r) = vim(i,r) - sum(s, pvxmd(i,s,r)*vxmd(i,s,r)+sum(j, vtwr(j,i,s,r))*pvtwr(i,s,r));
+ 176  mprofit(i,r) = round(mprofit(i,r),5);
+ 177  display mprofit;
+ 178   
+ 179  yprofit(g,r) = vom(g,r)*(1-rto(g,r))
+ 180          - sum(i, vdfm(i,g,r)*(1+rtfd0(i,g,r))
+ 181                 + vifm(i,g,r)*(1+rtfi0(i,g,r)))
+ 182          - sum(f, vfm(f,g,r)*(1+rtf0(f,g,r)));
+ 183   
+ 184  yprofit(g,r) = round(yprofit(g,r),6)
+ 185  display yprofit;
+ 186   
+ 187  *       Define a numeraire region for denominating international
+ 188  *       transfers:
+ 189   
+ 190  rnum(r) = yes$(vom("c",r)=smax(s,vom("c",s)));
+ 191  display rnum;
+ 192  *---------only for eppa----------------------------------------------------------------------------
+GDXIN   d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\data11\elasticity.gdx
+ 194   
+ 195   
+ 196  set     ghg     GREEN HOUSE GAS POLLUTANTS
+ 197          bt      BACKSTOP TECHNOLOGIES
+ 198          fa      for aggregate fixed factor and armington goods (prod d)
+ 199          layer   CES NESTING HIERARCHY
+ 200          x       Homogenous goods
+ 201          e(i)    ENERGY COMMODITIES;
+ 202   
+--- LOAD  ghg = 6:GHG
+--- LOAD  bt = 7:bt
+--- LOAD  fa = 8:fa
+--- LOAD  layer = 9:LAYER
+--- LOAD  x = 5:X
+--- LOAD  e = 4:e
+ 204   
+ 205  parameter
+ 206  SELAS(*,layer,r)        INITIAL SUBSTITUTION ELASTICITY MATRIX
+ 207  esup(*,r)               fixed factor substitution elasticity
+ 208  delas                   Final demand elasticity between energy and non-energy composites
+ 209  sigtrn                  Elasticity between transport consumption and other consumption in final demand
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/13/16 12:41:02 Page 6
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 210  d_elas(r)               top final demand substitution elasticity
+ 211  d_elase(r)              substitution among energy
+ 212  d_elaso(r)              substitution among otherind and enerint
+ 213  d_elasa(r)              substitution between agriculure and the rest
+ 214  ESUBE(*,r)              Elasticity of substitution between energy inputs
+ 215  sigc                    top level elasticity between energy consumption and gases
+ 216  siggv                   Elasticity of substitution for ghg in vintaged sectors
+ 217  sigg                    Elasticity of substitution for ghg
+ 218  sigg0                   Elasticity of substitution for ghg
+ 219  sigu                    top level transformation elasticity between production and urban gases
+ 220  pnesta                  production sectors nest a substitution elasticity
+ 221  enesta                  energy input to electricity sector nest a substitution elasticity
+ 222  tnesta                  hh transport substitution elasticity between roil and the rest of own-supplied transport
+ 223  tnests                  hh transport top nest elasticity (between purchased and own-supplied)
+ 224  s_bc(*,r)               sectoral elasticity of substitution for black and organic carbon
+ 225  bsigma(r)               Elasticity of substitution for biomass generation
+ 226  boilsig(r)              Fixed factor elasticity for 2nd gen bio-oil
+ 227  boilffg(r)              Fixed factor elasticity for 1st gen bio-oil
+ 228  etag(r,*)               income elasticity of g(redefined??)
+ 229  ***vdfmplusvifm_(irh,iii,rrr)  base year vdfm plus vifm
+ 230  **price_(irh,rrr,t)     Armington price with Reimer-Hertel sectors
+ 231  ***finalc_                      HH aggregated final consumption expenditure in billion US$
+ 232  **finalcp_              per capita HH aggregate final consumption expenditure in thousand US$ divided by 100
+ 233  **u_(rrr,t)             AIDADS utility level
+ 234  ***what_(irh,rrr,t)     w hat
+ 235  ***xhat_(irh,rrr,t)     x hat
+ 236  ***phia_(irh,rrr,t)     phi in the AIDADS system
+ 237  ***mbs_(irh,rrr,t)      marginal budget share
+ 238  ***elas_(irh,rrr,t)     income elasticity with Reimer-Hertel sector
+ 239  ***elastot_(irh,rrr,t)  elas converted from individual to aggregated level
+ 240  ***tha_(rrr,t)          correction for income elasticities of other sectors
+ 241  **alpha(irh)
+ 242  **beta(irh)
+ 243  **gamma(irh)
+ 244  **price07_e4_(irh,rrr)  base year real price levels from EPPA4 with base year 1997
+ 245  usda(r,*)               USDA ICP income elasticities for 2005
+ 246  wsigma(r)               Elasticity of substitution for wind generation
+ 247  bsf(*,r)                backstop fixed factor substitution elasticity
+ 248   
+ 249  efe(e,*,r)              Elasticity of substitution for ghg and energy-fe.tl (prod d)
+ 250  ene(*,r)                Elasticity of substitution for non-energy product-ne (prod d&z&dv)
+ 251  efa(fa,e,r)             Elasticity of substitution for fixed factor and armington goods (prod d)
+ 252  ****sigma(r)            Elasticity of substitution for nuclear energy
+ 253  neta(r)                 parameter used to calculate sigma-nuclear elasticity
+ 254  ****hsigma(r)           Elasticity of substitution for hydroelectric
+ 255  heta(r)                 parameter used to calculate hsigma-hydroelectric elasticity
+ 256  esubi(r)                Elasticity of substitution for invesment
+ 257  esb(r)                  Elasticity of substitution for household transport
+ 258  eyt                     Elasticity of substitution for international transport
+ 259  eeid(e,*,r)             Elasticity of substitution for conventional intermediate energy demand
+ 260  eedf(e,r)               Elasticity of substitution for conventional final energy demand
+ 261  etedf(e,r)              Elasticity of substitution for conventional final energy demand -- hh transport
+ 262  eeid_ghg(e,*,r)         Elasticity of substitution for energy demand inclusive of ghg -- intermediate
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/13/16 12:41:02 Page 7
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 263  efd_ghg(e,*,r)          Elasticity of substitution for energy demand inclusive of ghg -- final
+ 264  etefd_ghg(e,*,r)        Elasticity of substitution for energy demand inclusive of ghg -- hh transport
+ 265   
+ 266  err(r)                  Elasticity of substitution for international tansport and import-rr.tl(prod m)
+ 267  ehomm(x,r)              Elasticity of substitution for net imports of homogenous goods
+ 268  ehomx(x,r)              Elasticity of substitution for net exports of homogenous goods
+ 269  ebiom_f(r)              Elasticity of substitution for net imports of bio-oil
+ 270  ebiom_i(*,r)            Elasticity of substitution for net imports of bio-oil
+ 271  ebiox(r)                Elasticity of substitution for net exports of bio-oil
+ 272  eed(r)                  Elasticity of substitution for energy and dwelling goods(prod Z)
+ 273  ew(r)                   Elasticity of substitution for welfare
+ 274  edv(r)                  Elasticity of substitution for dv's other input(a)
+ 275   
+ 276  ecva(bt,r)              Elasticity of substitution for cva (prod eb)
+ 277  efva(bt,r)              Elasticity of substitution for fva (prod eb)
+ 278  egva(bt,r)              Elasticity of substitution for gva (prod eb)
+ 279  etdva(bt,r)             Elasticity of substitution for tdva (prod eb)
+ 280  egtd(bt,r)              Elasticity of substitution for cva (prod eb)
+ 281  esva(bt,r)              Elasticity of substitution for sva (prod eb)
+ 282  eeban(r)                Elasticity of substitution for eb-adv-nucl
+ 283  eva(bt,r)               Elasticity of substitution for va (prod eb)
+ 284   
+ 285  ewiput(r)               Elasticity of substitution for eb-wind input-b
+ 286  ebioput(r)              Elasticity of substitution for eb-bioe input-b
+ 287  esiput(r)               Elasticity of substitution for eb-solar input-a
+ 288  ebva(r)                 Elasticity of substitution for eb-windbio input bio cap&lab-b
+ 289  egb(r)                  Elasticity of substitution for eb-windgas input gas cap&lab-b
+ 290  egc(r)                  Elasticity of substitution for eb-windgas input for carbon-c
+ 291  egf(r)                  Elasticity of substitution for eb-windgas input for carbon&va of gas-f
+ 292  eob(r)                  Elasticity of substitution for eb-biooil input armington goods-b
+ 293  **** eb still have lots parameters not included
+ 294   
+ 295  eebv(r)                 Elasticity of substitution for vintaged backstop production
+ 296  eeqco2(r)               Elasticity of substitution for transforming carbon rights to ghg rights -- regional or regional to international
+ 297  eeqghg(ghg,r)           Elasticity of substitution for transforming ghg rights to carbon rights -- regional or regional to international
+ 298  ;
+ 299   
+ 300  * Elasticities between non-elec and elec in cosumption, investment and
+ 301  * government.
+ 302   
+ 303  SCALARS
+ 304          NOEEC
+ 305          NOEEI
+ 306          NOEEG
+ 307          ESUBG Elasticity in government demand ;
+ 308   
+ 309  * add ghg data from edgar
+ 310  parameters
+ 311  CH4     global CH4      emissions in 2010 (K tons)
+ 312  CH4C    global CH4      emissions in 2010 with combustion activity (K tons)
+ 313  CH4N    global CH4      emissions in 2010 with non-combustion activity (K tons)
+ 314  N2O     global N2O      emissions in 2010 (K tons)
+ 315  N2OC    global NO2      emissions in 2010 with combustion activity (K tons)
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/13/16 12:41:02 Page 8
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 316  N2ON    global NO2      emissions in 2010 with non-combustion activity (K tons)
+ 317  SF6     global SF6      emissions in 2010 (K tons)
+ 318  SF6C    global SF6      emissions in 2010 with combustion activity (K tons)
+ 319  SF6N    global SF6      emissions in 2010 with non-combustion activity (K tons)
+ 320  HFCs    global HFCs     emissions in 2010 (K tons)
+ 321  HFCsC   global HFCs     emissions in 2010 with combustion activity (K tons)
+ 322  HFCsN   global HFCs     emissions in 2010 with non-combustion activity (K tons)
+ 323  PFCs    global PFCs     emissions in 2010 (K tons)
+ 324  PFCsC   global PFCs     emissions in 2010 with combustion activity (K tons)
+ 325  PFCsN   global PFCs     emissions in 2010 with non-combustion activity (K tons)
+ 326  ;
+ 327   
+ 328   
+--- LOAD  SELAS = 10:SELAS
+--- LOAD  esup = 11:esup
+--- LOAD  delas = 12:delas
+--- LOAD  sigtrn = 13:sigtrn
+--- LOAD  d_elas = 14:d_elas
+--- LOAD  d_elase = 15:d_elase
+--- LOAD  d_elaso = 16:d_elaso
+--- LOAD  d_elasa = 17:d_elasa
+--- LOAD  ESUBE = 18:ESUBE
+--- LOAD  sigc = 19:sigc
+--- LOAD  siggv = 20:siggv
+--- LOAD  sigg = 21:sigg
+--- LOAD  sigg0 = 22:sigg0
+--- LOAD  sigu = 23:sigu
+--- LOAD  pnesta = 24:pnesta
+--- LOAD  enesta = 25:enesta
+--- LOAD  tnesta = 26:tnesta
+--- LOAD  tnests = 27:tnests
+--- LOAD  s_bc = 28:s_bc
+--- LOAD  bsigma = 29:bsigma
+--- LOAD  boilsig = 30:boilsig
+--- LOAD  boilffg = 31:boilffg
+--- LOAD  etag = 32:etag
+--- LOAD  usda = 33:usda
+--- LOAD  wsigma = 34:wsigma
+--- LOAD  bsf = 35:bsf
+--- LOAD  efe = 36:efe
+--- LOAD  ene = 37:ene
+--- LOAD  efa = 38:efa
+--- LOAD  neta = 39:neta
+--- LOAD  heta = 40:heta
+--- LOAD  esubi = 41:esubi
+--- LOAD  esb = 42:esb
+--- LOAD  eyt = 43:eyt
+--- LOAD  eeid = 44:eeid
+--- LOAD  eedf = 45:eedf
+--- LOAD  etedf = 46:etedf
+--- LOAD  eeid_ghg = 47:eeid_ghg
+--- LOAD  efd_ghg = 48:efd_ghg
+--- LOAD  etefd_ghg = 49:etefd_ghg
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 10/13/16 12:41:02 Page 9
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+--- LOAD  err = 50:err
+--- LOAD  ehomm = 51:ehomm
+--- LOAD  ehomx = 52:ehomx
+--- LOAD  ebiom_f = 53:ebiom_f
+--- LOAD  ebiom_i = 54:ebiom_i
+--- LOAD  ebiox = 55:ebiox
+--- LOAD  eed = 56:eed
+--- LOAD  ew = 57:ew
+--- LOAD  edv = 58:edv
+--- LOAD  ecva = 59:ecva
+--- LOAD  efva = 60:efva
+--- LOAD  egva = 61:egva
+--- LOAD  etdva = 62:etdva
+--- LOAD  egtd = 63:egtd
+--- LOAD  esva = 64:esva
+--- LOAD  eeban = 65:eeban
+--- LOAD  eva = 66:eva
+--- LOAD  ewiput = 67:ewiput
+--- LOAD  ebioput = 68:ebioput
+--- LOAD  esiput = 69:esiput
+--- LOAD  ebva = 70:ebva
+--- LOAD  egb = 71:egb
+--- LOAD  egc = 72:egc
+--- LOAD  egf = 73:egf
+--- LOAD  eob = 74:eob
+--- LOAD  eebv = 75:eebv
+--- LOAD  eeqco2 = 76:eeqco2
+--- LOAD  eeqghg = 77:eeqghg
+--- LOAD  NOEEC = 78:NOEEC
+--- LOAD  NOEEI = 79:NOEEI
+--- LOAD  NOEEG = 80:NOEEG
+--- LOAD  ESUBG = 81:ESUBG
+ 335   
+ 336  *$gdxin "..\data11\GtapGhg2010.gdx"
+ 337  *$load CH4, CH4C, CH4N, N2O, N2OC, N2ON, SF6, SF6C, SF6N, HFCs, HFCsC, HFCsN, PFCs, PFCsC, PFCsN
+ 338   
+ 339  set con  subset-consumption sector /c/
+ 340  *set con(g)  subset-consumption sector /c/
+ 341  *    ec(i)   Energy goods
+ 342      ec   Energy goods
+ 343                  /
+ 344                  coal    Coal
+ 345                  oil     Crude oil
+ 346                  gas     Natural gas
+ 347                  roil    Refined oil products
+ 348                  elec    Electricity
+ 349                  /;
+ 350  set     GI goverment and investment                /g, i/;
+ 351  SET     NE NON-ENERGY COMMODITIES                  /crop, live, fors, food, EINT, OTHR, serv, tran, dwe/;
+ 352  set     nend non-energy commodities excluding dwe /crop, live, fors, food, EINT, OTHR, serv, tran/;
+ 353  set     dwe  ownership of dwellings               /dwe/;
+ 354   
+ 355   
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 10
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 356  SET     ENOE NON-ELEC ENERGY COMMODITIES           /COAL, OIL, GAS, ROIL/;
+ 357  SET     ELEC ELEC ENERGY COMMODITIES               /ELEC/;
+ 358  *SET    KSI(I) CAPITAL-SPECIFIC INDUSTRIES /COAL, OIL, GAS, ROIL, ELEC, EINT/;
+ 359  *SET     X(I) Homogenous goods /OIL/;
+ 360  *SET     X(I) Homogenous goods /OIL, GAS/;
+ 361  *SET    CGD(I) /CGD/;
+ 362  *SET     OIL(I) OIL /OIL/;
+ 363  *SET     GAS(I) GAS /GAS/;
+ 364  *set    roil(i) /roil/;
+ 365  *set    coal(i) /coal/;
+ 366  *set    oil_col(enoe) /roil, coal/;
+ 367  *set    refo(e) /roil/;
+ 368  SET     AGRI Agriculture /crop, live, fors/,
+ 369          EINT Energy intensive /eint/;
+ 370  *SET    TRANSFUEL(I)    SECTOR USING FUEL AS TRASNPORTATION /CROP, SERV, TRAN/;
+ 371  SET     AENOE /COAL, OIL, GAS, ROIL, crop, live, fors, ELEC, EINT/;
+ 372  SET     NAENOE /FOOD, OTHR, serv, tran, dwe/;
+ 373  *SET    VEHIFUELP(E) /ROIL/;
+ 374  *SET            OTE(NE) /EINT, OTHR/;
+ 375  *SET            AGDEV(R) Agri-consumer developing countries /CHN, IND, REA, BRA, AFR/;
+ 376   
+ 377  * VJK (LUC)
+ 378   
+ 379  * LUC: Land use categories
+ 380   
+ 381   
+ 382  parameter       esub(g)         Top-level elasticity indemand /c 1/
+ 383                  voam(i,g,r)     value of armington goods at biginning
+ 384                  rtfa0(i,g,r)    Base year effective tax rate of Armington good i use by g
+ 385                  w0(r)           utility at biginning
+ 386                  rto0(g,r)       Commodity rates taxes at biginning
+ 387                  epslond(i,g,r)  co2-energy transform coeffiecient(Gton-Mtoe)
+ 388                  epsloni(i,g,r)  co2-energy transform coeffiecient
+ 389                  epslon(i,g,r)   co2-energy transform coeffiecient
+ 390                  eco2(i,g,r)     the total co2 due to sector g using good i
+ 391                  co2tax(i,g,r)   co2 tax
+ 392                  clim(r)         CO2 emissions limit (Gton)
+ 393                  sclim(r)        co2 policy switch;
+ 394  scalar          scale           unit chage(from Mton to Gton) /1e-3/;
+ 395   
+ 396  rto0(g,r)    = rto(g,r);
+ 397  *voam(i,g,r)  = vdfm(i,g,r) * (1+rtfd0(i,g,r)) + vifm(i,g,r) * (1+rtfi0(i,g,r));
+ 398  voam(i,g,r)  = vdfm(i,g,r)  + vifm(i,g,r) ;
+ 399  rtfa0(i,g,r)$voam(i,g,r)= ((vdfm(i,g,r)*(1+rtfd0(i,g,r))+vifm(i,g,r)*(1+rtfi0(i,g,r)))/voam(i,g,r))-1;
+ 400   
+ 401  w0(r)        = vom("c",r)+vom("i",r);
+ 402  *eco2d(i,g,r)$(evd(i,g,r)=0) = 0;
+ 403  *eco2i(i,g,r)$(evi(i,g,r)=0) = 0;
+ 404  *eco2d(i,g,r) = eco2d(i,g,r)*scale;
+ 405  *eco2i(i,g,r) = eco2i(i,g,r)*scale;
+ 406  epslond(i,g,r)$evd(i,g,r) = eco2d(i,g,r) / evd(i,g,r);
+ 407  epsloni(i,g,r)$evi(i,g,r) = eco2i(i,g,r) / evi(i,g,r);
+ 408  *eco2(i,g,r)  = eco2d(i,g,r)+eco2i(i,g,r);
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 11
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 409  *epslon(i,g,r)$(evi(i,g,r)+evd(i,g,r)) = eco2(i,g,r) / (evi(i,g,r)+evd(i,g,r));
+ 410  *epslon("coal",g,r)                     = 0.1*44/12*0.24686/23.88;
+ 411  *epslon("roil",g,r)                     = 0.1*44/12*0.199/23.88  ;
+ 412  *epslon("gas",g,r)                      = 0.1*44/12*0.137/23.88  ;
+ 413  co2tax(i,g,r)=0;
+ 414  *clim(r)=sum((i,g),eco2d(i,g,r)+eco2i(i,g,r));
+ 415  *clim(r)=sum((i,g),(evi(i,g,r)+evd(i,g,r))*epslon(i,g,r));
+ 416  *eco2(i,g,r)  = (evi(i,g,r)+evd(i,g,r))*epslon(i,G,R);
+ 417  sclim(r)=no;
+ 418   
+ 419   
+ 420   
+ 421   
+ 422   
+ 423   
+ 424   
+ 425   
+ 426  *---------end  of  extra setting for gtapaggregation of eppa----------------------------------------------------------------------------------------
+EXIT d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\gtap9data.gms
+INCLUDE    d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\defines\eppa_TW.map
+ 429  * Regional Mapping
+ 430  set rr  Regions in the aggregation /
+ 431   
+ 432          USA     USA
+ 433          CAN     Canada
+ 434          MEX     Mexico
+ 435          BRA     Brazil
+ 436          LAM     Rest of Americas
+ 437          EUR     Europe
+ 438          RUS     Russia
+ 439          ROE     Rest of Europe and Central Asia
+ 440          CHN     China
+ 441          IND     India
+ 442          JPN     Japan
+ 443          ASI     Dynamic Asia
+ 444          REA     Rest of East Asia
+ 445          ANZ     Australia and Oceania
+ 446          MES     Middle East
+ 447          AFR     Africa
+ 448          KOR     South Korea
+ 449          IDZ     Indonesia
+ 450          TWN     Taiwan
+ 451   
+ 452  /;
+ 453   
+ 454  SET mapr(r,rr) Mapping of GTAP Regions (from-to)
+ 455   
+ 456  /
+ 457   
+ 458  ALB     .       roe     Albania
+ 459  ARE     .       mes     United Arab Emirates
+ 460  ARG     .       lam     Argentina
+ 461  ARM     .       roe     Armenia
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 12
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 462  AUS     .       anz     Australia
+ 463  AUT     .       eur     Austria
+ 464  AZE     .       roe     Azerbaijan
+ 465  BEL     .       eur     Belgium
+ 466  BGD     .       rea     Bangladesh
+ 467  BGR     .       eur     Bulgaria
+ 468  BHR     .       mes     Bahrain
+ 469  BLR     .       roe     Belarus
+ 470  BOL     .       lam     Plurinational Republic of Bolivia
+ 471  BRA     .       bra     Brazil
+ 472  BWA     .       afr     Botswana
+ 473  CAN     .       can     Canada
+ 474  CHE     .       eur     Switzerland
+ 475  CHL     .       lam     Chile
+ 476  CHN     .       chn     China
+ 477  CIV     .       afr     Cote d'Ivoire
+ 478  CMR     .       afr     Cameroon
+ 479  COL     .       lam     Colombia
+ 480  CRI     .       lam     Costa Rica
+ 481  CYP     .       eur     Cyprus
+ 482  CZE     .       eur     Czech Republic
+ 483  DEU     .       eur     Germany
+ 484  DNK     .       eur     Denmark
+ 485  ECU     .       lam     Ecuador
+ 486  EGY     .       afr     Egypt
+ 487  ESP     .       eur     Spain
+ 488  EST     .       eur     Estonia
+ 489  ETH     .       afr     Ethiopia
+ 490  FIN     .       eur     Finland
+ 491  FRA     .       eur     France
+ 492  GBR     .       eur     United Kingdom
+ 493  GEO     .       roe     Georgia
+ 494  GHA     .       afr     Ghana
+ 495  GRC     .       eur     Greece
+ 496  GTM     .       lam     Guatemala
+ 497  HKG     .       chn     Hong Kong
+ 498  HND     .       lam     Honduras
+ 499  HRV     .       eur     Croatia
+ 500  HUN     .       eur     Hungary
+ 501  IDN     .       idz     Indonesia
+ 502  IND     .       ind     India
+ 503  IRL     .       eur     Ireland
+ 504  IRN     .       mes     Iran Islamic Republic of
+ 505  ISR     .       mes     Israel
+ 506  ITA     .       eur     Italy
+ 507  JPN     .       jpn     Japan
+ 508  KAZ     .       roe     Kazakhstan
+ 509  KEN     .       afr     Kenya
+ 510  KGZ     .       roe     Kyrgyzstan
+ 511  KHM     .       rea     Cambodia
+ 512  KOR     .       kor     Korea Republic of
+ 513  KWT     .       mes     Kuwait
+ 514  LAO     .       rea     Lao People's Democratic Republic
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 13
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 515  LKA     .       rea     Sri Lanka
+ 516  LTU     .       eur     Lithuania
+ 517  LUX     .       eur     Luxembourg
+ 518  LVA     .       eur     Latvia
+ 519  MAR     .       afr     Morocco
+ 520  MDG     .       afr     Madagascar
+ 521  MEX     .       mex     Mexico
+ 522  MLT     .       eur     Malta
+ 523  MNG     .       rea     Mongolia
+ 524  MOZ     .       afr     Mozambique
+ 525  MUS     .       afr     Mauritius
+ 526  MWI     .       afr     Malawi
+ 527  MYS     .       asi     Malaysia
+ 528  NAM     .       afr     Namibia
+ 529  NGA     .       afr     Nigeria
+ 530  NIC     .       lam     Nicaragua
+ 531  NLD     .       eur     Netherlands
+ 532  NOR     .       eur     Norway
+ 533  NPL     .       rea     Nepal
+ 534  NZL     .       anz     New Zealand
+ 535  OMN     .       mes     Oman
+ 536  PAK     .       rea     Pakistan
+ 537  PAN     .       lam     Panama
+ 538  PER     .       lam     Peru
+ 539  PHL     .       asi     Philippines
+ 540  POL     .       eur     Poland
+ 541  PRT     .       eur     Portugal
+ 542  PRY     .       lam     Paraguay
+ 543  QAT     .       mes     Qatar
+ 544  ROU     .       eur     Romania
+ 545  RUS     .       rus     Russian Federation
+ 546  SAU     .       mes     Saudi Arabia
+ 547  SEN     .       afr     Senegal
+ 548  SGP     .       asi     Singapore
+ 549  SLV     .       lam     El Salvador
+ 550  SVK     .       eur     Slovakia
+ 551  SVN     .       eur     Slovenia
+ 552  SWE     .       eur     Sweden
+ 553  THA     .       asi     Thailand
+ 554  TUN     .       afr     Tunisia
+ 555  TUR     .       roe     Turkey
+ 556   
+ 557  TZA     .       afr     Tanzania United Republic of
+ 558  UGA     .       afr     Uganda
+ 559  UKR     .       roe     Ukraine
+ 560  URY     .       lam     Uruguay
+ 561  USA     .       usa     United States of America
+ 562  VEN     .       lam     Venezuela
+ 563  VNM     .       rea     Viet Nam
+ 564  XAC     .       afr     South Central Africa
+ 565  XCA     .       lam     Rest of Central America
+ 566  XCB     .       lam     Caribbean
+ 567  XCF     .       afr     Central Africa
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 14
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 568  XEA     .       rea     Rest of East Asia
+ 569  XEC     .       afr     Rest of Eastern Africa
+ 570  XEE     .       roe     Rest of Eastern Europe
+ 571  XEF     .       eur     Rest of EFTA
+ 572  XER     .       roe     Rest of Europe
+ 573  XNA     .       lam     Rest of North America
+ 574  XNF     .       afr     Rest of North Africa
+ 575  XOC     .       anz     Rest of Oceania
+ 576  XSA     .       rea     Rest of South Asia
+ 577  XSC     .       afr     Rest of South African Customs Union
+ 578  XSE     .       rea     Rest of Southeast Asia
+ 579  XSM     .       lam     Rest of South America
+ 580  XSU     .       roe     Rest of Former Soviet Union
+ 581  XTW     .       anz     Rest of the World
+ 582  XWF     .       afr     Rest of Western Africa
+ 583  XWS     .       mes     Rest of Western Asia
+ 584  ZAF     .       afr     South Africa
+ 585  ZMB     .       afr     Zambia
+ 586  ZWE     .       afr     Zimbabwe
+ 587   
+ 588  *update from GTAP8 to GTAp9
+ 589  BEN     .       afr     Benin
+ 590  BFA     .       afr     Burkina Faso
+ 591  BRN     .       rea     Brunei Darussalam
+ 592  DOM     .       lam     Dominican Republic
+ 593  GIN     .       afr     Guinea
+ 594  JAM     .       lam     Jamaica
+ 595  JOR     .       mes     Jordan
+ 596  PRI     .       lam     Puerto Rico
+ 597  RWA     .       afr     Rwanda
+ 598  TGO     .       afr     Togo
+ 599  TTO     .       lam     Trinidad and Tobago
+ 600   
+ 601  *Extract Tawian from ASI
+ 602  TWN     .       TWN     Taiwan
+ 603  /;
+ 604   
+ 605  *Sectoral Mapping
+ 606   
+ 607  *=in EPPA6_18=
+ 608  **alias (i,ii);
+ 609  **SET mapi(i,ii)  Mapping for sectors and goods;
+ 610  **mapi(i,i) = yes;
+ 611   
+ 612  set ii Sectors and goods in aggregate model /
+ 613          crop    Agriculture - crops
+ 614          live    Agriculture - livestock
+ 615          fors    Agriculture - forestry
+ 616          food    Food products
+ 617          coal    Coal
+ 618          oil     Crude Oil
+ 619          roil    Refined Oil
+ 620          gas     Gas
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 15
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 621          elec    Electricity
+ 622          eint    Energy-intensive Industries
+ 623          othr    Other Industries
+ 624          serv    Services
+ 625          tran    Transport
+ 626          dwe     Ownership of dwellings
+ 627  *       cgd     Savings Good
+ 628  /;
+ 629   
+ 630  *note:HC 20160627
+ 631  *=in G20MAP=
+ 632  *SET mapi(i,ii)  Mapping for sectors and goods;
+ 633  *mapi(i,ii) = yes$sameas(i,ii);
+ 634  *abort$(card(i)<>card(ii))      "Error: card(i)<>card(ii).";
+ 635  *abort$(card(mapi)<>card(i))    "Error: card(mapi)<>card(i).";
+ 636   
+ 637  *=in EPPA6_18=
+ 638  *SET mapi(*,ii)  Mapping for sectors and goods /
+ 639   
+ 640  SET mapi(i,ii)  Mapping for sectors and goods /
+ 641   
+ 642  PDR.crop  paddy rice
+ 643  WHT.crop  wheat
+ 644  GRO.crop  cereal grains nec
+ 645  V_F.crop  vegetables - fruit - nuts
+ 646  OSD.crop  oil seeds
+ 647  C_B.crop  sugar cane - sugar beet
+ 648  PFB.crop  plant-based fibers
+ 649  OCR.crop  crops nec
+ 650  CTL.live  bo horses
+ 651  OAP.live  animal products nec
+ 652  RMK.live  raw milk
+ 653  WOL.live  wool - silk-worm cocoons
+ 654  FRS.fors  forestry
+ 655  FSH.live  fishing
+ 656   
+ 657  *COL.coal  coal *in gtap9ingams is COL
+ 658  COA.coal  coal
+ 659   
+ 660  *CRU.oil   oil *in gtap9ingams is CRU
+ 661  OIL.oil   oil
+ 662   
+ 663  GAS.gas   gas
+ 664  OMN.othr  minerals nec
+ 665  CMT.food  bo meat products
+ 666  OMT.food  meat products
+ 667  VOL.food  vegetable oils and fats
+ 668  ** bio-diesel is included in VOL
+ 669  MIL.food  dairy products
+ 670  PCR.food  processed rice
+ 671  SGR.food  sugar
+ 672  OFD.food  food products nec
+ 673  ** corn ethanol eth1 is included in OFD
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 16
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 674  B_T.food  beverages and tobacco products
+ 675  TEX.othr  textiles
+ 676  WAP.othr  wearing apparel
+ 677  LEA.othr  leather products
+ 678  LUM.othr  wood products
+ 679  PPP.eint  paper products - publishing
+ 680   
+ 681  *Oil.roil  petroleum - coal products *in gtap9ingams is Oil
+ 682  P_C.roil  petroleum - coal products
+ 683   
+ 684  CRP.eint  chemical - rubber - plastic products
+ 685  ** sugarcane ethanol is included in CRP
+ 686  NMM.eint  mineral products nec
+ 687  I_S.eint  ferrous metals
+ 688  NFM.eint  metals nec
+ 689  FMP.eint  metal products
+ 690  MVH.othr  motor vehicles and parts
+ 691  OTN.othr  transport equipment nec
+ 692   
+ 693  *EEQ.othr  electronic equipment  *in gtap9ingams is EEQ
+ 694  ELE.othr  electronic equipment
+ 695   
+ 696  OME.othr  machinery and equipment nec
+ 697  OMF.othr  manufactures nec
+ 698   
+ 699  *ELE.elec  electricity  *in gtap9ingams is ELE
+ 700  ELY.elec  electricity
+ 701   
+ 702  GDT.gas   gas manufacture - distribution
+ 703  WTR.othr  water
+ 704  CNS.othr  construction
+ 705  TRD.serv  trade
+ 706  OTP.tran  transport nec
+ 707  WTP.tran  water transport
+ 708  ATP.tran  air transport
+ 709  CMN.serv  communication
+ 710  OFI.serv  financial services nec
+ 711  ISR.serv  insurance
+ 712  OBS.serv  business services nec
+ 713  ROS.serv  recreational and other services
+ 714  OSG.serv  public admin - and defence - education - health
+ 715  DWE.dwe   ownership of dwellings
+ 716  *DWE.othr  ownership of dwellings
+ 717  *CGDS.cgd  Savings good
+ 718  /;
+ 719   
+ 720   
+ 721  * Note: (YHC: 20131121)
+ 722  * VOL.food  vegetable oils and fats
+ 723  ** bio-diesel is included in VOL
+ 724   
+ 725  * OFD.food  food products nec
+ 726  ** corn ethanol eth1 is included in OFD
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 17
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 727   
+ 728  * CRP.eint  chemical - rubber - plastic products
+ 729  ** sugarcane ethanol is included in CRP
+ 730   
+ 731   
+ 732  SET   ff   Factors of production
+ 733          /
+ 734          lnd     Land,
+ 735          lab     Labor,
+ 736          cap     Capital,
+ 737          fix     Natural resources
+ 738          /;
+ 739   
+ 740   
+ 741  set mapf(*,ff) /
+ 742   
+ 743          off_mgr_pros.lab        Officials and Mangers legislators (ISCO-88 Major Groups 1-2),
+ 744          tech_aspros.lab         Technicians technicians and associate professionals
+ 745          clerks.lab              Clerks
+ 746          service_shop.lab        Service and market sales workers
+ 747          ag_othlowsk.lab         Agricultural and unskilled workers (Major Groups 6-9)
+ 748          Land.lnd                Land,
+ 749          Capital.cap             Capital,
+ 750          NatlRes.fix             Natural resources
+ 751          /;
+ 752   
+ 753   
+ 754  *abort$(card(mapf)<>card(f))    "Error: card(mapf)<>card(f).";
+ 755   
+ 756  *factor names are reassigned in gtap9ingams
+ 757  *off_mgr_pros.mgr
+ 758  *tech_aspros.tec
+ 759  *clerks.clk
+ 760  *service_shop.srv
+ 761  *ag_othlowsk.lab
+ 762  *Land.lnd
+ 763  *Capital.cap
+ 764  *NatlRes.res
+ 765   
+ 766   
+ 767  SET eec energy commodities
+ 768          /
+ 769          coal    Coal
+ 770          oil     Crude oil
+ 771          gas     Natural gas,
+ 772          roil    Refined oil products,
+ 773          elec    Electricity
+ 774          /;
+ 775   
+ 776   
+ 777   
+ 778   
+ 779  SET     mape(*,eec)
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 18
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 780          /
+ 781          ecoa.coal       Coal,
+ 782          eoil.oil        Crude oil,
+ 783          (egas,egdt).gas Natural gas,
+ 784          ep_c.roil       Refined oil products,
+ 785          eely.elec       Electricity
+ 786          /;
+ 787   
+ 788   
+ 789  alias (ii,jj), (rr,ss);
+ 790   
+ 791  set     gg(*)   All goods in aggregate model plus C - G - I /
+ 792                  c       Household,
+ 793                  g       Government consumption,
+ 794                  i       Investment/;
+ 795  alias (u,*);
+ 796  gg(u)$ii(u) = ii(u);
+ 797  abort$sum(ii$(sameas(ii,"c") or sameas(ii,"g") or sameas(ii,"i")),1) "Invalid identifier: C, G and I are reserved.";
+ 798   
+ 799  parameters
+ 800          vom_(*,rr)      Aggretate output
+ 801          vfm_(ff,*,rr)   Endowments - Firms' purchases at market prices,
+ 802          vdfm_(ii,*,rr)  Intermediates - firms' domestic purchases at market prices,
+ 803          vifm_(ii,*,rr)  Intermediates - firms' imports at market prices,
+ 804          vxmd_(ii,rr,ss) Trade - bilateral exports at market prices,
+ 805          vst_(ii,rr)     Trade - exports for international transportation
+ 806          vtwr_(ii,jj,rr,ss)      Trade - Margins for international transportation at world prices,
+ 807   
+ 808          evt_(ii,rr,rr)  Volume of energy trade (mtoe),
+ 809          evd_(ii,*,rr)   Domestic energy use (mtoe),
+ 810          evi_(ii,*,rr)   Imported energy use (mtoe),
+ 811          eco2d_(ii,*,rr) CO2 emissions in domestic fuels - Mt CO2",
+ 812          eco2i_(ii,*,rr) CO2 emissions in foreign fuels - Mt CO2",
+ 813   
+ 814          rto_(*,rr)      Output (or income) subsidy rates
+ 815          rtf_(ff,*,rr)   Primary factor and commodity rates taxes
+ 816          rtfd_(ii,*,rr)  Firms domestic tax rates
+ 817          rtfi_(ii,*,rr)  Firms' import tax rates
+ 818          rtxs_(ii,rr,ss) Export subsidy rates
+ 819          rtms_(ii,rr,ss) Import taxes rates,
+ 820   
+ 821          esubd_(ii)      Elasticity of substitution (M versus D),
+ 822          esubva_(jj)     Elasticity of substitution between factors
+ 823          esubm_(ii)      Intra-import elasticity of substitution,
+ 824          etrae_(ff)      Elasticity of transformation,
+ 825          eta_(ii,rr)     Income elasticity of demand,
+ 826          epsilon_(ii,rr) Own-price elasticity of demand;
+ 827   
+ 828   
+ 829  alias (i,j), (ii,jj);;
+ 830  alias (r,s), (rr,ss);
+ 831  set maps(s,ss), mapj(j,jj), mapg(*,*)/c.c, i.i, g.g/;
+ 832  maps(r,rr) = mapr(r,rr);
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 19
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+ 833  mapj(j,jj) = mapi(j,jj);
+ 834  mapg(i,ii) = mapi(i,ii);
+ 835   
+ 836  file ktitle; put ktitle;
+ 837   
+ 838  put_utility 'title' /"Aggregating vst.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+1083  put_utility 'title' /"Aggregating vom.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+1310  put_utility 'title' /"Aggregating vfm.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+1588  put_utility 'title' /"Aggregating vdfm.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+1866  put_utility 'title' /"Aggregating vifm.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+2144  put_utility 'title' /"Aggregating vxmd.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+2422  put_utility 'title' /"Aggregating evd.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+2700  put_utility 'title' /"Aggregating evi.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+2978  put_utility 'title' /"Aggregating evt.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+3256  put_utility 'title' /"Aggregating eco2d.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+3534  put_utility 'title' /"Aggregating eco2i.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+3812  put_utility 'title' /"Aggregating vtwr.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+4136   
+4137  *       First, convert tax rates into tax payments:
+4138   
+4139  rto(g,r)    = rto(g,r)*vom(g,r);
+4140  rtf(f,j,r)  = rtf(f,j,r) * vfm(f,j,r);
+4141  rtfd(i,g,r) = rtfd(i,g,r) * vdfm(i,g,r);
+4142  rtfi(i,g,r) = rtfi(i,g,r) * vifm(i,g,r);
+4143  rtms(i,r,s) = rtms(i,r,s)*((1-rtxs(i,r,s)) * vxmd(i,r,s) + sum(j,vtwr(j,i,r,s)));
+4144  rtxs(i,r,s) = rtxs(i,r,s) * vxmd(i,r,s);
+4145   
+4146   
+4147  *       Aggregate:
+4148   
+4149  put_utility 'title' /"Aggregating rto.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+4376  put_utility 'title' /"Aggregating rtf.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+4654  put_utility 'title' /"Aggregating rtfd.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+4932  put_utility 'title' /"Aggregating rtfi.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+5210  put_utility 'title' /"Aggregating rtxs.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+5488  put_utility 'title' /"Aggregating rtms.";
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 20
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+5766   
+5767  parameter profit;
+5768  profit(gg,rr) = vom_(gg,rr)
+5769                  - sum(ii, vdfm_(ii,gg,rr) + rtfd_(ii,gg,rr))
+5770                  - sum(ii, vifm_(ii,gg,rr) + rtfi_(ii,gg,rr));
+5771   
+5772  profit(gg,rr) = vom_(gg,rr) - rto_(gg,rr)
+5773                  - sum(ii, vdfm_(ii,gg,rr) + rtfd_(ii,gg,rr))
+5774                  - sum(ii, vifm_(ii,gg,rr) + rtfi_(ii,gg,rr))
+5775                  - sum(ff, vfm_(ff,gg,rr)  + rtf_(ff,gg,rr));
+5776  display profit;
+5777   
+5778   
+5779  *       Convert back to rates:
+5780   
+5781  rto_(gg,rr)$vom_(gg,rr) = rto_(gg,rr)/vom_(gg,rr);
+5782  rtf_(ff,jj,rr)$vfm_(ff,jj,rr)  = rtf_(ff,jj,rr) / vfm_(ff,jj,rr);
+5783  rtfd_(ii,gg,rr)$ vdfm_(ii,gg,rr) = rtfd_(ii,gg,rr) / vdfm_(ii,gg,rr);
+5784  rtfi_(ii,gg,rr)$ vifm_(ii,gg,rr) = rtfi_(ii,gg,rr) / vifm_(ii,gg,rr);
+5785  rtxs_(ii,rr,ss)$ vxmd_(ii,rr,ss) = rtxs_(ii,rr,ss) / vxmd_(ii,rr,ss);
+5786  rtms_(ii,rr,ss)$((1-rtxs_(ii,rr,ss)) * vxmd_(ii,rr,ss) + sum(jj,vtwr_(jj,ii,rr,ss)))
+5787           = rtms_(ii,rr,ss)/((1-rtxs_(ii,rr,ss)) * vxmd_(ii,rr,ss) + sum(jj,vtwr_(jj,ii,rr,ss)));
+5788   
+5789  esubd_(ii)$sum(mapi(i,ii), sum((j,r), vdfm(i,j,r)+vifm(i,j,r)))
+5790          = sum(mapi(i,ii), sum((j,r), vdfm(i,j,r)+vifm(i,j,r))*esubd(i)) /
+5791               sum(mapi(i,ii), sum((j,r), vdfm(i,j,r)+vifm(i,j,r)));
+5792  esubva_(jj)$sum(mapi(j,jj), sum((f,r), vfm(f,j,r)))
+5793          = sum(mapi(j,jj), sum((f,r), vfm(f,j,r)*esubva(j))) /
+5794                sum(mapi(j,jj), sum((f,r), vfm(f,j,r)));
+5795  esubm_(ii)$sum((r,mapi(i,ii)), vim(i,r))
+5796          = sum((r,mapi(i,ii)), vim(i,r)*esubm(i)) / sum((r,mapi(i,ii)), vim(i,r));
+5797   
+5798  etrae_(ff)$sum(mapf(f,ff)$sf(f), sum((j,r), vfm(f,j,r)))
+5799             = sum(mapf(f,ff)$sf(f), sum((j,r), vfm(f,j,r)*etrae(f))) /
+5800               sum(mapf(f,ff)$sf(f), sum((j,r), vfm(f,j,r)));
+5801   
+5802  parameter       vp(i,r) Value of private expenditure;
+5803  vp(i,r) = vdfm(i,"c",r)*(1+rtfd0(i,"c",r)) + vifm(i,"c",r)*(1+rtfi0(i,"c",r));
+5804   
+5805  eta_(ii,rr)$sum((mapr(r,rr),mapi(i,ii)),vp(i,r))
+5806          = sum((mapr(r,rr),mapi(i,ii)),vp(i,r)*eta(i,r)) /
+5807            sum((mapr(r,rr),mapi(i,ii)),vp(i,r));
+5808  epsilon_(ii,rr)$sum((mapr(r,rr),mapi(i,ii)),vp(i,r))
+5809          = sum((mapr(r,rr),mapi(i,ii)),vp(i,r)*epsilon(i,r)) /
+5810            sum((mapr(r,rr),mapi(i,ii)),vp(i,r));
+5811   
+5812  loop(mapf(mf,ff), etrae_(ff) = +inf;);
+5813   
+5814  *---------------only for eppa-----------------------------------------------------------------------------------------------------------
+5815  parameters
+5816  SELAS_(*,layer,rr)      INITIAL SUBSTITUTION ELASTICITY MATRIX
+5817  esup_(*,rr)             fixed factor substitution elasticity
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 21
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+5818  *delas                  Final demand elasticity between energy and non-energy composites
+5819  *sigtrn                 Elasticity between transport consumption and other consumption in final demand
+5820  d_elas_(rr)             top final demand substitution elasticity
+5821  d_elase_(rr)            substitution among energy
+5822  d_elaso_(rr)            substitution among otherind and enerint
+5823  d_elasa_(rr)            substitution between agriculure and the rest
+5824  ESUBE_(*,rr)            Elasticity of substitution between energy inputs
+5825  sigc_                   top level elasticity between energy consumption and gases
+5826  siggv_                  Elasticity of substitution for ghg in vintaged sectors
+5827  sigg_                   Elasticity of substitution for ghg
+5828  sigg0_                  Elasticity of substitution for ghg
+5829  sigu_                   top level transformation elasticity between production and urban gases
+5830  pnesta_                 production sectors nest a substitution elasticity
+5831  enesta_                 energy input to electricity sector nest a substitution elasticity
+5832  tnesta_                 hh transport substitution elasticity between roil and the rest of own-supplied transport
+5833  tnests_                 hh transport top nest elasticity (between purchased and own-supplied)
+5834  s_bc_(*,rr)             sectoral elasticity of substitution for black and organic carbon
+5835  bsigma_(rr)             Elasticity of substitution for biomass generation
+5836  boilsig_(rr)            Fixed factor elasticity for 2nd gen bio-oil
+5837  boilffg_(rr)            Fixed factor elasticity for 1st gen bio-oil
+5838  etag_(rr,*)             income elasticity of g(redefined??)
+5839  ***vdfmplusvifm_(irh,ii,rr)  base year vdfm plus vifm
+5840  **price_(irh,rr,t)      Armington price with Reimer-Hertel sectors
+5841  ***finalc_                      HH aggregated final consumption expenditure in billion US$
+5842  **finalcp_              per capita HH aggregate final consumption expenditure in thousand US$ divided by 100
+5843  **u_(rr,t)              AIDADS utility level
+5844  ***what_(irh,rr,t)      w hat
+5845  ***xhat_(irh,rr,t)      x hat
+5846  ***phia_(irh,rr,t)      phi in the AIDADS system
+5847  ***mbs_(irh,rr,t)       marginal budget share
+5848  ***elas_(irh,rr,t)      income elasticity with Reimer-Hertel sector
+5849  ***elastot_(irh,rr,t)   elas converted from individual to aggregated level
+5850  ***tha_(rr,t)           correction for income elasticities of other sectors
+5851  **alpha(irh)
+5852  **beta(irh)
+5853  **gamma(irh)
+5854  **price07_e4_(irh,rr)  base year real price levels from EPPA4 with base year 1997
+5855  usda_(rr,*)             USDA ICP income elasticities for 2005
+5856  wsigma_(rr)             Elasticity of substitution for wind generation
+5857  bsf_(*,rr)              backstop fixed factor substitution elasticity
+5858   
+5859  efe_(eec,*,rr)          Elasticity of substitution for ghg and energy-fe.tl (prod d)
+5860  ene_(*,rr)              Elasticity of substitution for non-energy product-ne (prod d&z&dv)
+5861  efa_(fa,eec,rr) Elasticity of substitution for fixed factor and armington goods (prod d)
+5862  ****sigma_(rr)          Elasticity of substitution for nuclear energy
+5863  neta_(rr)               parameter used to calculate sigma-nuclear elasticity
+5864  ****hsigma_(rr) Elasticity of substitution for hydroelectric
+5865  heta_(rr)               parameter used to calculate hsigma-hydroelectric elasticity
+5866  esubi_(rr)              Elasticity of substitution for invesment
+5867  esb_(rr)                Elasticity of substitution for household transport
+5868  *eyt                    Elasticity of substitution for international transport
+5869  eeid_(eec,*,rr) Elasticity of substitution for conventional intermediate energy demand
+5870  eedf_(eec,rr)           Elasticity of substitution for conventional final energy demand
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 22
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+5871  etedf_(eec,rr)          Elasticity of substitution for conventional final energy demand -- hh transport
+5872  eeid_ghg_(eec,*,rr)     Elasticity of substitution for energy demand inclusive of ghg -- intermediate
+5873  efd_ghg_(eec,*,rr)      Elasticity of substitution for energy demand inclusive of ghg -- final
+5874  etefd_ghg_(eec,*,rr)    Elasticity of substitution for energy demand inclusive of ghg -- hh transport
+5875   
+5876  err_(rr)                Elasticity of substitution for international tansport and import-rr.tl(prod m)
+5877  ehomm_(x,rr)            Elasticity of substitution for net imports of homogenous goods
+5878  ehomx_(x,rr)            Elasticity of substitution for net exports of homogenous goods
+5879  ebiom_f_(rr)            Elasticity of substitution for net imports of bio-oil
+5880  ebiom_i_(*,rr)          Elasticity of substitution for net imports of bio-oil
+5881  ebiox_(rr)              Elasticity of substitution for net exports of bio-oil
+5882  eed_(rr)                Elasticity of substitution for energy and dwelling goods(prod Z)
+5883  ew_(rr)         Elasticity of substitution for welfare
+5884  edv_(rr)                Elasticity of substitution for dv's other input(a)
+5885   
+5886  ecva_(bt,rr)            Elasticity of substitution for cva (prod eb)
+5887  efva_(bt,rr)            Elasticity of substitution for fva (prod eb)
+5888  egva_(bt,rr)            Elasticity of substitution for gva (prod eb)
+5889  etdva_(bt,rr)           Elasticity of substitution for tdva (prod eb)
+5890  egtd_(bt,rr)            Elasticity of substitution for cva (prod eb)
+5891  esva_(bt,rr)            Elasticity of substitution for sva (prod eb)
+5892  eeban_(rr)              Elasticity of substitution for eb-adv-nucl
+5893  eva_(bt,rr)             Elasticity of substitution for va (prod eb)
+5894   
+5895  ewiput_(rr)             Elasticity of substitution for eb-wind input-b
+5896  ebioput_(rr)            Elasticity of substitution for eb-bioe input-b
+5897  esiput_(rr)             Elasticity of substitution for eb-solar input-a
+5898  ebva_(rr)               Elasticity of substitution for eb-windbio input bio cap&lab-b
+5899  egb_(rr)                Elasticity of substitution for eb-windgas input gas cap&lab-b
+5900  egc_(rr)                Elasticity of substitution for eb-windgas input for carbon-c
+5901  egf_(rr)                Elasticity of substitution for eb-windgas input for carbon&va of gas-f
+5902  eob_(rr)                Elasticity of substitution for eb-biooil input armington goods-b
+5903  **** eb still have lots parameters not included
+5904   
+5905  eebv_(rr)               Elasticity of substitution for vintaged backstop production
+5906  eeqco2_(rr)             Elasticity of substitution for transforming carbon rights to ghg rights -- regional or regional to international
+5907  eeqghg_(ghg,rr)         Elasticity of substitution for transforming ghg rights to carbon rights -- regional or regional to international
+5908   
+5909  CH4_(rr,*)              global CH4      emissions in 2010 from edgar (Ktons)
+5910  CH4C_(rr,*)             global CH4      emissions in 2010 with combustion activity (K tons)
+5911  CH4N_(rr,*)             global CH4      emissions in 2010 with non-combustion activity (K tons)
+5912  N2O_(rr,*)              global N2O      emissions in 2010 from edgar (Ktons)
+5913  N2OC_(rr,*)             global NO2      emissions in 2010 with combustion activity (K tons)
+5914  N2ON_(rr,*)             global NO2      emissions in 2010 with non-combustion activity (K tons)
+5915  SF6_(rr,*)              global SF6      emissions in 2010 from edgar (K tons)
+5916  SF6C_(rr,*)             global SF6      emissions in 2010 with combustion activity (K tons)
+5917  SF6N_(rr,*)             global SF6      emissions in 2010 with non-combustion activity (K tons)
+5918  HFCs_(rr,*)             global HFCs     emissions in 2010 from edgar (K tons)
+5919  HFCsC_(rr,*)            global HFCs     emissions in 2010 with combustion activity (K tons)
+5920  HFCsN_(rr,*)            global HFCs     emissions in 2010 with non-combustion activity (K tons)
+5921  PFCs_(rr,*)             global PFCs     emissions in 2010 from edgar (K tons)
+5922  PFCsC_(rr,*)            global PFCs     emissions in 2010 with combustion activity (K tons)
+5923  PFCsN_(rr,*)            global PFCs     emissions in 2010 with non-combustion activity (K tons)
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 23
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+5924  ;
+5925   
+5926  * Elasticities between non-elec and elec in cosumption, investment and
+5927  * government.
+5928   
+5929  *SCALARS
+5930  *       NOEEC          /1.0/
+5931  *       NOEEI          /1.0/
+5932  *       NOEEG          /1.0/
+5933  *       ESUBG Elasticity in government demand /0.5/;
+5934   
+      **** elastisity conversion
+      esubva_(jj)$sum(mapi(j,jj), sum((sf,r), vfm(sf,j,r)))
+              = sum(mapi(j,jj), sum((sf,r), vfm(sf,j,r)*esubva(j))) /
+                    sum(mapi(j,jj), sum((sf,r), vfm(sf,j,r)));
+5941   
+5942  *SELAS_(ggg,layer,rrr)  = sum((mapr(rrr,r),mapg(ggg,g)),SELAS(g,layer,r));
+5943  *SELAS_("hh",layer,rrr) = sum(mapr(rrr,r),SELAS("hh",layer,r));
+5944  SELAS_(ii,"smm",rr)$(sum((mapr(r,rr),mapg(i,ii)),vim(i,r)))
+5945  = sum((mapr(r,rr),mapg(i,ii)),SELAS(i,"smm",r)*vim(i,r)) /sum((mapr(r,rr),mapg(i,ii)),vim(i,r));
+5946   
+5947  SELAS_(ii,"sdm",rr)$(sum((mapr(r,rr),mapi(i,ii)),sum (g,voam(i,g,r))))
+5948  = sum((mapr(r,rr),mapi(i,ii)),SELAS(i,"sdm",r)*sum (g,voam(i,g,r))) /sum((mapr(r,rr),mapi(i,ii)),sum(g,voam(i,g,r)));
+5949   
+5950  SELAS_(gg,"l_k",rr)$(sum((mapr(r,rr),mapg(g,gg)),sum (f$mf(f),vfm(f,g,r))))
+5951  = sum((mapr(r,rr),mapg(g,gg)),SELAS(g,"l_k",r)*sum (f$mf(f),vfm(f,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(f$mf(f),vfm(f,g,r)));
+5952   
+5953  Selas_("hh","noe_el",rr)$sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,"c",r)))
+5954  = sum((mapr(r,rr)),selas("hh","noe_el",r)*sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,"c",r))) /sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,"c",r)));
+5955   
+5956  Selas_(gg,"noe_el",rr)$sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r)))
+5957  = sum((mapr(r,rr),mapg(g,gg)),selas(g,"noe_el",r)*sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r)));
+5958   
+5959  Selas_(gg,"e_kl",rr)$(agri(gg) and sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$(ec(ii) or ne(ii)),1)),voam(i,g,r))))
+5960  = sum((mapr(r,rr),mapg(g,gg)),selas(g,"e_kl",r)*sum(i$(sum (mapi(i,ii)$(ec(ii) or ne(ii)),1)),voam(i,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$(ec(ii) or ne(ii)),1)),voam(i,g,r)));
+5961   
+5962  Selas_(gg,"e_kl",rr)$((eint(gg) or naenoe(gg)) and sum((mapr(r,rr),mapg(g,gg)),(sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r))+sum(f$mf(f),vfm(f,g,r)))))
+5963  = sum((mapr(r,rr),mapg(g,gg)),selas(g,"e_kl",r)*(sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r))+sum(f$mf(f),vfm(f,g,r))))
+5964  /sum((mapr(r,rr),mapg(g,gg)),(sum(i$(sum (mapi(i,ii)$ec(ii),1)),voam(i,g,r))+sum(f$mf(f),vfm(f,g,r))));
+5965   
+5966  *esup_(ggg,rrr)         = sum((mapr(rrr,r),mapg(ggg,g)),esup(g,r));
+5967  esup_(gg,rr)$(agri(gg) and sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)-sum(mf,vfm(mf,g,r)))))
+5968  = sum((mapr(r,rr),mapg(g,gg)),esup(g,r)*(vom(g,r)-sum(mf,vfm(mf,g,r)))) /sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)-sum(mf,vfm(mf,g,r))));
+5969   
+5970  esup_(gg,rr)$((eint(gg)or naenoe(gg) or enoe(gg)) and sum((mapr(r,rr),mapg(g,gg)),(vom(g,r))))
+5971  = sum((mapr(r,rr),mapg(g,gg)),esup(g,r)*(vom(g,r))) /sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)));
+5972   
+5973  *d_elas_(rrr)           = sum(mapr(rrr,r),d_elas(r));
+5974  d_elas_(rr)$(sum((mapr(r,rr)),sum(i$(sum( mapi(i,ii)$nend(ii),1)),voam(i,"c",r))))
+5975  = sum((mapr(r,rr)),d_elas(r)*sum(i$(sum (mapi(i,ii)$nend(ii),1)),voam(i,"c",r))) /sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$nend(ii),1)),voam(i,"c",r)));
+5976  *d_elase_(rrr)          =d_elas_(rrr);
+5977  *d_elaso_(rrr)          =d_elas_(rrr);
+5978  *d_elasa_(rrr)          =d_elas_(rrr);
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 24
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+5979  *ESUBE_(ggg,rrr)                = sum((mapr(rrr,r),mapg(ggg,g)),ESUBE(g,r));
+5980  ESUBE_(gg,rr)$sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$enoe(ii),1)),voam(i,g,r)))
+5981  = sum((mapr(r,rr),mapg(g,gg)),ESUBE(g,r)*sum(i$(sum (mapi(i,ii)$enoe(ii),1)),voam(i,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$enoe(ii),1)),voam(i,g,r)));
+5982   
+5983  *sigc_(ghg,eec,rrr)     = sum((mapr(rrr,r),mape(eec,e)),sigc(ghg,e,r));
+5984  *sigg_(ghg,ggg,rrr)     = sum((mapr(rrr,r),mapg(ggg,g)),sigg(ghg,g,r));
+5985  *sigg_(ghg,"fd",rrr)    = sum((mapr(rrr,r)),sigg(ghg,"fd",r));
+5986  sigg_(ghg,"fd",rr)$(sum((mapr(r,rr)),vom("c",r)))
+5987  = sum((mapr(r,rr)),sigg(ghg,"fd",r)*vom("c",r)) /sum((mapr(r,rr)),vom("c",r));
+5988   
+5989  sigg_(ghg,ii,rr)$(agri(ii) and sum((mapr(r,rr),mapg(i,ii)),vom(i,r)))
+5990  = sum((mapr(r,rr),mapg(i,ii)),sigg(ghg,i,r)*vom(i,r))/ sum((mapr(r,rr),mapg(i,ii)),vom(i,r));
+5991   
+5992  sigg_("n2o",gg,rr)$(agri(gg) and sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)-sum(mf,vfm(mf,g,r)))))
+5993  = sum((mapr(r,rr),mapg(g,gg)),sigg("n2o",g,r)*(vom(g,r)-sum(mf,vfm(mf,g,r)))) /sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)-sum(mf,vfm(mf,g,r))));
+5994   
+5995  sigg_(ghg,gg,rr)$((eint(gg)or naenoe(gg)) and sum((mapr(r,rr),mapg(g,gg)),(vom(g,r))))
+5996  = sum((mapr(r,rr),mapg(g,gg)),sigg(ghg,g,r)*(vom(g,r))) /sum((mapr(r,rr),mapg(g,gg)),(vom(g,r)));
+5997   
+5998  sigg_(ghg,ii,rr)$((enoe(ii)) and sum((mapr(r,rr),mapg(i,ii)),(vom(i,r)-sum(sf,vfm(sf,i,r)))))
+5999  = sum((mapr(r,rr),mapg(i,ii)),sigg(ghg,i,r)*(vom(i,r)-sum(sf,vfm(sf,i,r))))/ sum((mapr(r,rr),mapg(i,ii)),(vom(i,r)-sum(sf,vfm(sf,i,r))));
+6000   
+6001   
+6002  *sigg0_(ghg,uu,rrr)     =sigg(ghg,uu,rrr);
+6003  *siggv_(ggg,rrr)                = sum((mapr(rrr,r),mapg(ggg,g)),siggv(g,r));
+6004  *sigu_(ggg,rrr)         = sum((mapr(rrr,r),mapg(ggg,g)),sigu(g,r));
+6005  *sigu_("fd",rrr)                = sum((mapr(rrr,r)),sigu("fd",r));
+6006  **below only for non-electricity--------------------------------------------
+6007  sigu_(ii,rr)$(sum((mapr(r,rr),mapg(i,ii)),vom(i,r)))
+6008  = sum((mapr(r,rr),mapg(i,ii)),sigu(i,r)*vom(i,r))/ sum((mapr(r,rr),mapg(i,ii)),vom(i,r));
+6009  *----------------------------------------------------------------------------
+6010  *s_bc_(ggg,rrr)         = sum((mapr(rrr,r),mapg(ggg,g)),s_bc(g,r));
+6011  *bsigma_(rrr)           = sum(mapr(rrr,r),bsigma(r));
+6012  *boilsig_(rrr)          = sum(mapr(rrr,r),boilsig(r));
+6013  *boilffg_(rrr)          = sum(mapr(rrr,r),boilffg(r));
+6014  *pnesta_(ggg,rrr)       = sum((mapr(rrr,r),mapg(ggg,g)),pnesta(g,r));
+6015  pnesta_(ii,rr)$(agri(ii) and sum((mapr(r,rr),mapg(i,ii)),vom(i,r)))
+6016  = sum((mapr(r,rr),mapg(i,ii)),pnesta(i,r)*vom(i,r))/ sum((mapr(r,rr),mapg(i,ii)),vom(i,r));
+6017   
+6018  pnesta_(ii,rr)$((eint(ii) or naenoe(ii) or enoe(ii)) and sum((mapr(r,rr),mapg(i,ii)),(vom(i,r)-sum(sf,vfm(sf,i,r)))))
+6019  = sum((mapr(r,rr),mapg(i,ii)),pnesta(i,r)*(vom(i,r)-sum(sf,vfm(sf,i,r))))/ sum((mapr(r,rr),mapg(i,ii)),(vom(i,r)-sum(sf,vfm(sf,i,r))));
+6020   
+6021  *pnesta_("nucl",rrr)    = sum(mapr(rrr,r),pnesta("nucl",r));
+6022   
+6023  *pnesta_("hydr",rrr)    = sum(mapr(rrr,r),pnesta("hydr",r));
+6024  *enesta_(eec,rrr)       = sum((mapr(rrr,r),mape(eec,e)),enesta(e,r));
+6025  enesta_(eec,rr)$(sum((mapr(r,rr),mape(e,eec)),vom(e,r)))
+6026  = sum((mapr(r,rr),mape(e,eec)),enesta(e,r)*vom(e,r))/sum((mapr(r,rr),mape(e,eec)),vom(e,r));
+6027   
+6028  *tnesta_(rrr)           = sum(mapr(rrr,r),tnesta(r));
+6029  *tnests_(rrr)           = sum(mapr(rrr,r),tnests(r));
+6030  *etag_(rrr,ggg)         = sum((mapr(rrr,r),mapg(ggg,g)),etag(r,g));
+6031  **price_(irh,rrr,t) = sum(mapr(rrr,r),price(irh,r,t));
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 25
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+6032  **finalcp_(rrr,t) = sum(mapr(rrr,r),finalcp(r,t));
+6033  **u_(rrr,t) = sum(mapr(rrr,r),u(r,t));
+6034  *usda_(rrr,iii)         = sum((mapr(rrr,r),mapi(iii,i)),usda(r,i));
+6035  *wsigma_(rrr)           = sum(mapr(rrr,r),wsigma(r));
+6036  *bsf_(uu,rrr)           = sum(mapr(rrr,r),bsf(uu,r));
+6037   
+6038  *efe_(eec,ggg,rrr)      = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),efe(e,g,r));
+6039  *ene_(ggg,rrr)          = sum((mapr(rrr,r),mapg(ggg,g)),ene(g,r));
+6040  ene_(gg,rr)$sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$ne(ii),1)),voam(i,g,r)))
+6041  = sum((mapr(r,rr),mapg(g,gg)),ene(g,r)*sum(i$(sum (mapi(i,ii)$ne(ii),1)),voam(i,g,r))) /sum((mapr(r,rr),mapg(g,gg)),sum(i$(sum (mapi(i,ii)$ne(ii),1)),voam(i,g,r)));
+6042   
+6043  *efa_(fa,eec,rrr)       = sum((mapr(rrr,r),mape(eec,e)),efa(fa,e,r));
+6044  *neta_(rrr)             = sum(mapr(rrr,r),neta(r));
+6045   
+6046  *heta_(rrr)             = sum(mapr(rrr,r),heta(r));
+6047  *esubi_(rrr)            = sum(mapr(rrr,r),esubi(r));
+6048  esubi_(rr)$(sum(mapr(r,rr),vom("i",r)))
+6049  = sum(mapr(r,rr),esubi(r)*vom("i",r))/sum(mapr(r,rr),vom("i",r));
+6050   
+6051  *esb_(rrr)              = sum(mapr(rrr,r),esb(r));
+6052  *eeid_(eec,ggg,rrr)     = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),eeid(e,g,r));
+6053  *eedf_(eec,rrr)         = sum((mapr(rrr,r),mape(eec,e)),eedf(e,r));
+6054  *etedf_(eec,rrr)                = sum((mapr(rrr,r),mape(eec,e)),etedf(e,r));
+6055  *eeid_ghg_(eec,ggg,rrr) = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),eeid_ghg(e,g,r));
+6056  *efd_ghg_(eec,ggg,rrr)  = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),efd_ghg(e,g,r));
+6057  *etefd_ghg_(eec,ggg,rrr)        = sum((mapr(rrr,r),mapg(ggg,g),mape(eec,e)),etefd_ghg(e,g,r));
+6058   
+6059  *err_(rrr)              = sum(mapr(rrr,r),err(r));
+6060  err_(rr)$(sum(mapr(r,rr),(sum((i,s),vxmd(i,s,r))+sum((j,i,s),vtwr(j,i,s,r)))))
+6061  = sum(mapr(r,rr),err(r)*(sum((i,s),vxmd(i,s,r))+sum((j,i,s),vtwr(j,i,s,r))))/ sum(mapr(r,rr),(sum((i,s),vxmd(i,s,r))+sum((j,i,s),vtwr(j,i,s,r)))) ;
+6062   
+6063  *ehomm_(x,rrr)          = sum(mapr(rrr,r),ehomm(x,r));
+6064  *ehomx_(x,rrr)          = sum(mapr(rrr,r),ehomx(x,r));
+6065  *ebiom_f_(rrr)          = sum(mapr(rrr,r),ebiom_f(r));
+6066  *ebiom_i_(ggg,rrr)      = sum((mapr(rrr,r),mapg(ggg,g)),ebiom_i(g,r));
+6067  *ebiox_(rrr)            = sum(mapr(rrr,r),ebiox(r));
+6068  *eed_(rrr)              = sum(mapr(rrr,r),eed(r));
+6069  eed_(rr)$sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$(ec(ii) or dwe(ii)),1)),voam(i,"c",r)))
+6070  = sum((mapr(r,rr)),eed(r)*sum(i$(sum (mapi(i,ii)$(ec(ii) or dwe(ii)),1)),voam(i,"c",r))) /sum((mapr(r,rr)),sum(i$(sum (mapi(i,ii)$(ec(ii) or dwe(ii)),1)),voam(i,"c",r)));
+6071  *ew_(rrr)               = sum(mapr(rrr,r),ew(r));
+6072  ew_(rr)$(sum(mapr(r,rr),w0(r)))
+6073  = sum(mapr(r,rr),ew(r)*w0(r))/sum(mapr(r,rr),w0(r));
+6074  *edv_(rrr)              = sum(mapr(rrr,r),edv(r));
+6075  *ecva_(bt,rrr)          = sum(mapr(rrr,r),ecva(bt,r));
+6076  *efva_(bt,rrr)          = sum(mapr(rrr,r),efva(bt,r));
+6077  *egva_(bt,rrr)          = sum(mapr(rrr,r),egva(bt,r));
+6078  *etdva_(bt,rrr)         = sum(mapr(rrr,r),etdva(bt,r));
+6079  *egtd_(bt,rrr)          = sum(mapr(rrr,r),egtd(bt,r));
+6080  *esva_(bt,rrr)          = sum(mapr(rrr,r),esva(bt,r));
+6081  *eeban_(rrr)            = sum(mapr(rrr,r),eeban(r));
+6082  *eva_(bt,rrr)           = sum(mapr(rrr,r),eva(bt,r));
+6083  *ewiput_(rrr)           = sum(mapr(rrr,r),ewiput(r));
+6084  *ebioput_(rrr)          = sum(mapr(rrr,r),ebioput(r));
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 26
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+6085  *esiput_(rrr)           = sum(mapr(rrr,r),esiput(r));
+6086  *ebva_(rrr)             = sum(mapr(rrr,r),ebva(r));
+6087  *egb_(rrr)              = sum(mapr(rrr,r),egb(r));
+6088  *egc_(rrr)              = sum(mapr(rrr,r),egc(r));
+6089  *egf_(rrr)              = sum(mapr(rrr,r),egf(r));
+6090  *eob_(rrr)              = sum(mapr(rrr,r),eob(r));
+6091   
+6092   
+6093  *eebv_(rrr)             = sum(mapr(rrr,r),eebv(r));
+6094  *eeqco2_(rrr)           = sum(mapr(rrr,r),eeqco2(r));
+6095  *eeqghg_(ghg,rrr)       = sum(mapr(rrr,r),eeqghg(ghg,r));
+6096   
+6097  *aggregation for ghg data
+6098   
+GDXIN   d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\data11\GtapGhg2010.gdx
+--- LOAD  CH4 = 1:CH4
+--- LOAD  CH4C = 2:CH4C
+--- LOAD  CH4N = 3:CH4N
+--- LOAD  N2O = 4:N2O
+--- LOAD  N2OC = 5:N2OC
+--- LOAD  N2ON = 6:N2ON
+--- LOAD  SF6 = 7:SF6
+--- LOAD  SF6C = 8:SF6C
+--- LOAD  SF6N = 9:SF6N
+--- LOAD  HFCs = 10:HFCs
+--- LOAD  HFCsC = 11:HFCsC
+--- LOAD  HFCsN = 12:HFCsN
+--- LOAD  PFCs = 13:PFCs
+--- LOAD  PFCsC = 14:PFCsC
+--- LOAD  PFCsN = 15:PFCsN
+6101   
+6102  put_utility 'title' /"Aggregating CH4.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+6329   
+6330  put_utility 'title' /"Aggregating CH4C.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+6557   
+6558  put_utility 'title' /"Aggregating CH4N.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+6785   
+6786  put_utility 'title' /"Aggregating N2O.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+7013   
+7014  put_utility 'title' /"Aggregating N2OC.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+7241  put_utility 'title' /"Aggregating N2ON.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+7468   
+7469  put_utility 'title' /"Aggregating SF6.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+7696   
+7697  put_utility 'title' /"Aggregating SF6C.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 27
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+7924  put_utility 'title' /"Aggregating SF6N.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+8151   
+8152  put_utility 'title' /"Aggregating HFCs.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+8379  put_utility 'title' /"Aggregating HFCsC.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+8606  put_utility 'title' /"Aggregating HFCsN.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+8833   
+8834  put_utility 'title' /"Aggregating PFCs.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+9061  put_utility 'title' /"Aggregating PFCsC.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+9288  put_utility 'title' /"Aggregating PFCsN.";
+BATINCLUDE d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+9515   
+9516   
+9517   
+9518   
+9519   
+9521   
+9522  put_utility 'title' /"Unloading dataset.";
+9523  execute_unload '..\data11\eppa_TW.gdx',
+9524          gg=g, rr=r, ff=f, ii=i,
+9525          vfm_=vfm, vdfm_=vdfm, vifm_=vifm,vxmd_=vxmd, vst_=vst, vtwr_=vtwr,
+9526          rto_=rto, rtf_=rtf, rtfd_=rtfd, rtfi_=rtfi, rtxs_=rtxs, rtms_=rtms,
+9527          evd_=evd, evi_=evi, evt_=evt, eco2d_=eco2d, eco2i_=eco2i,
+9528          esubd_=esubd, esubva_=esubva, esubm_=esubm, etrae_=etrae, eta_=eta, epsilon_=epsilon,
+9529  eec=e, x, ghg, bt, fa, layer,
+9530  CH4_ =CH4,
+9531  CH4C_ =CH4C,
+9532  CH4N_ =CH4N,
+9533  N2O_ =N2O,
+9534  N2OC_ =N2OC,
+9535  N2ON_ =N2ON,
+9536  SF6_ =SF6,
+9537  SF6C_ =SF6C,
+9538  SF6N_ =SF6N,
+9539  HFCs_ =HFCs,
+9540  HFCsC_ =HFCsC,
+9541  HFCsN_ =HFCsN,
+9542  PFCs_ =PFCs,
+9543  PFCsC_ =PFCsC,
+9544  PFCsN_ =PFCsN ,
+9545   
+9546  SELAS_          =       SELAS,
+9547  esup_           =       esup,
+9548  delas,
+9549  sigtrn,
+9550  d_elas_         =       d_elas,
+9551  *d_elase_       =       d_elase,
+9552  **d_elaso_      =       d_elaso,
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 28
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+9553  *d_elasa_       =       d_elasa,
+9554  ESUBE_          =       ESUBE,
+9555  *sigc_          =       sigc,
+9556  *siggv_         =       siggv,
+9557  sigg_           =       sigg,
+9558  *sigg0_         =       sigg0,
+9559  sigu_           =       sigu,
+9560  pnesta_         =       pnesta,
+9561  enesta_         =       enesta,
+9562  *tnesta_                =       tnesta,
+9563  *tnests_                =       tnests,
+9564  *s_bc_          =       s_bc,
+9565  *bsigma_                =       bsigma,
+9566  *boilsig_       =       boilsig,
+9567  *boilffg_       =       boilffg,
+9568  *etag_          =       etag,
+9569   
+9570  *usda_          =       usda,
+9571  *wsigma_                =       wsigma,
+9572  *bsf_           =       bsf,
+9573   
+9574  *efe_           =       efe,
+9575  ene_            =       ene,
+9576  *efa_           =       efa,
+9577  *neta_          =       neta,
+9578  *heta_          =       heta,
+9579  esubi_          =       esubi,
+9580  *esb_           =       esb,
+9581  eyt,
+9582  *eeid_          =       eeid,
+9583  *eedf_          =       eedf,
+9584  *etedf_         =       etedf,
+9585  *eeid_ghg_      =       eeid_ghg,
+9586  *efd_ghg_       =       efd_ghg,
+9587  *etefd_ghg_     =       etefd_ghg,
+9588   
+9589  err_            =       err,
+9590  *ehomm_         =       ehomm,
+9591  *ehomx_         =       ehomx,
+9592  *ebiom_f_       =       ebiom_f,
+9593  *ebiom_i_       =       ebiom_i,
+9594  *ebiox_         =       ebiox,
+9595  eed_            =       eed,
+9596  ew_             =       ew,
+9597  *edv_           =       edv,
+9598   
+9599  *ecva_          =       ecva,
+9600  *efva_          =       efva,
+9601  *egva_          =       egva,
+9602  *etdva_         =       etdva,
+9603  *egtd_          =       egtd,
+9604  *esva_          =       esva,
+9605  *eeban_         =       eeban,
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 29
+GAMS Code to Read a GTAP 9 Dataset
+C o m p i l a t i o n
+
+
+9606  *eva_           =       eva,
+9607   
+9608  *ewiput_                =       ewiput,
+9609  *ebioput_       =       ebioput,
+9610  *esiput_                =       esiput,
+9611  *ebva_          =       ebva,
+9612  *egb_           =       egb,
+9613  *egc_           =       egc,
+9614  *egf_           =       egf,
+9615  *eob_           =       eob,
+9616   
+9617   
+9618  *eebv_          =       eebv,
+9619  *eeqco2_                =       eeqco2,
+9620  *eeqghg_                =       eeqghg,
+9621   
+9622  *NOEEC,
+9623  *NOEEI,
+9624  *NOEEG,
+9625  ESUBG;
+9626   
+9627  *---------------end of eppa----------------------------------------------------------------------------------------------------------------------------
+9628  put_utility 'title' /"All done with aggregation.";
+EXIT d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\gtapaggr.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 30
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\gtapaggr.gms
+     2        8 INCLUDE        1       8  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\gtap9data.gms
+     3       22 IF EXIST       2      14  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\filtertest.gdx
+     4       22 GDXIN          2      14  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\filtertest.gdx
+     5       23 IF EXIST       2      15  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\filtertest.gdx
+     6      193 GDXIN          2     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\data11\elasticity.gdx
+     7      427 EXIT           2     419  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\gtap9data.gms
+     8      428 INCLUDE        1       9  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\defines\eppa_TW.map
+     9      839 BATINCLUDE     1      61  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    10      917 BATINCLUDE     9     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    11      955 EXIT          10      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    12      964 BATINCLUDE     9     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    13     1002 EXIT          12      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    14     1016 BATINCLUDE     9     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    15     1061 EXIT          14      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    16     1068 BATINCLUDE     9     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    17     1076 EXIT          16      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    18     1082 EXIT           9     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    19     1084 BATINCLUDE     1      63  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    20     1144 BATINCLUDE    19     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    21     1182 EXIT          20      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    22     1191 BATINCLUDE    19     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    23     1229 EXIT          22      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    24     1243 BATINCLUDE    19     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    25     1288 EXIT          24      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    26     1295 BATINCLUDE    19     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    27     1303 EXIT          26      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    28     1309 EXIT          19     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    29     1311 BATINCLUDE     1      65  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    30     1372 BATINCLUDE    29     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    31     1410 EXIT          30      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    32     1419 BATINCLUDE    29     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    33     1457 EXIT          32      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    34     1466 BATINCLUDE    29     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    35     1504 EXIT          34      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    36     1518 BATINCLUDE    29     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    37     1564 EXIT          36      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    38     1571 BATINCLUDE    29     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    39     1579 EXIT          38      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    40     1587 EXIT          29     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    41     1589 BATINCLUDE     1      67  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    42     1650 BATINCLUDE    41     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    43     1688 EXIT          42      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    44     1697 BATINCLUDE    41     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    45     1735 EXIT          44      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    46     1744 BATINCLUDE    41     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    47     1782 EXIT          46      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    48     1796 BATINCLUDE    41     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    49     1842 EXIT          48      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    50     1849 BATINCLUDE    41     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    51     1857 EXIT          50      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 31
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+    52     1865 EXIT          41     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    53     1867 BATINCLUDE     1      69  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    54     1928 BATINCLUDE    53     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    55     1966 EXIT          54      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    56     1975 BATINCLUDE    53     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    57     2013 EXIT          56      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    58     2022 BATINCLUDE    53     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    59     2060 EXIT          58      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    60     2074 BATINCLUDE    53     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    61     2120 EXIT          60      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    62     2127 BATINCLUDE    53     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    63     2135 EXIT          62      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    64     2143 EXIT          53     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    65     2145 BATINCLUDE     1      71  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    66     2206 BATINCLUDE    65     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    67     2244 EXIT          66      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    68     2253 BATINCLUDE    65     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    69     2291 EXIT          68      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    70     2300 BATINCLUDE    65     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    71     2338 EXIT          70      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    72     2352 BATINCLUDE    65     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    73     2398 EXIT          72      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    74     2405 BATINCLUDE    65     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    75     2413 EXIT          74      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    76     2421 EXIT          65     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    77     2423 BATINCLUDE     1      73  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    78     2484 BATINCLUDE    77     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    79     2522 EXIT          78      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    80     2531 BATINCLUDE    77     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    81     2569 EXIT          80      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    82     2578 BATINCLUDE    77     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    83     2616 EXIT          82      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    84     2630 BATINCLUDE    77     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    85     2676 EXIT          84      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    86     2683 BATINCLUDE    77     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    87     2691 EXIT          86      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    88     2699 EXIT          77     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    89     2701 BATINCLUDE     1      75  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+    90     2762 BATINCLUDE    89     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    91     2800 EXIT          90      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    92     2809 BATINCLUDE    89     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    93     2847 EXIT          92      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    94     2856 BATINCLUDE    89     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    95     2894 EXIT          94      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+    96     2908 BATINCLUDE    89     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    97     2954 EXIT          96      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+    98     2961 BATINCLUDE    89     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+    99     2969 EXIT          98      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   100     2977 EXIT          89     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   101     2979 BATINCLUDE     1      77  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   102     3040 BATINCLUDE   101     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 32
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+   103     3078 EXIT         102      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   104     3087 BATINCLUDE   101     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   105     3125 EXIT         104      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   106     3134 BATINCLUDE   101     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   107     3172 EXIT         106      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   108     3186 BATINCLUDE   101     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   109     3232 EXIT         108      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   110     3239 BATINCLUDE   101     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   111     3247 EXIT         110      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   112     3255 EXIT         101     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   113     3257 BATINCLUDE     1      79  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   114     3318 BATINCLUDE   113     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   115     3356 EXIT         114      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   116     3365 BATINCLUDE   113     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   117     3403 EXIT         116      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   118     3412 BATINCLUDE   113     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   119     3450 EXIT         118      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   120     3464 BATINCLUDE   113     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   121     3510 EXIT         120      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   122     3517 BATINCLUDE   113     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   123     3525 EXIT         122      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   124     3533 EXIT         113     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   125     3535 BATINCLUDE     1      81  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   126     3596 BATINCLUDE   125     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   127     3634 EXIT         126      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   128     3643 BATINCLUDE   125     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   129     3681 EXIT         128      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   130     3690 BATINCLUDE   125     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   131     3728 EXIT         130      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   132     3742 BATINCLUDE   125     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   133     3788 EXIT         132      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   134     3795 BATINCLUDE   125     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   135     3803 EXIT         134      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   136     3811 EXIT         125     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   137     3813 BATINCLUDE     1      83  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   138     3875 BATINCLUDE   137     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   139     3913 EXIT         138      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   140     3922 BATINCLUDE   137     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   141     3960 EXIT         140      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   142     3969 BATINCLUDE   137     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   143     4007 EXIT         142      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   144     4015 BATINCLUDE   137     225  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   145     4053 EXIT         144      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   146     4065 BATINCLUDE   137     237  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   147     4112 EXIT         146      85  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   148     4119 BATINCLUDE   137     244  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   149     4127 EXIT         148      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   150     4135 EXIT         137     252  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   151     4150 BATINCLUDE     1      98  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   152     4210 BATINCLUDE   151     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   153     4248 EXIT         152      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 33
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+   154     4257 BATINCLUDE   151     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   155     4295 EXIT         154      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   156     4309 BATINCLUDE   151     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   157     4354 EXIT         156      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   158     4361 BATINCLUDE   151     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   159     4369 EXIT         158      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   160     4375 EXIT         151     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   161     4377 BATINCLUDE     1     100  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   162     4438 BATINCLUDE   161     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   163     4476 EXIT         162      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   164     4485 BATINCLUDE   161     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   165     4523 EXIT         164      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   166     4532 BATINCLUDE   161     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   167     4570 EXIT         166      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   168     4584 BATINCLUDE   161     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   169     4630 EXIT         168      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   170     4637 BATINCLUDE   161     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   171     4645 EXIT         170      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   172     4653 EXIT         161     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   173     4655 BATINCLUDE     1     102  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   174     4716 BATINCLUDE   173     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   175     4754 EXIT         174      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   176     4763 BATINCLUDE   173     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   177     4801 EXIT         176      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   178     4810 BATINCLUDE   173     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   179     4848 EXIT         178      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   180     4862 BATINCLUDE   173     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   181     4908 EXIT         180      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   182     4915 BATINCLUDE   173     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   183     4923 EXIT         182      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   184     4931 EXIT         173     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   185     4933 BATINCLUDE     1     104  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   186     4994 BATINCLUDE   185     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   187     5032 EXIT         186      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   188     5041 BATINCLUDE   185     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   189     5079 EXIT         188      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   190     5088 BATINCLUDE   185     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   191     5126 EXIT         190      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   192     5140 BATINCLUDE   185     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   193     5186 EXIT         192      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   194     5193 BATINCLUDE   185     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   195     5201 EXIT         194      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   196     5209 EXIT         185     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   197     5211 BATINCLUDE     1     106  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   198     5272 BATINCLUDE   197     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   199     5310 EXIT         198      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   200     5319 BATINCLUDE   197     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   201     5357 EXIT         200      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   202     5366 BATINCLUDE   197     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   203     5404 EXIT         202      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   204     5418 BATINCLUDE   197     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 34
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+   205     5464 EXIT         204      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   206     5471 BATINCLUDE   197     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   207     5479 EXIT         206      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   208     5487 EXIT         197     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   209     5489 BATINCLUDE     1     108  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   210     5550 BATINCLUDE   209     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   211     5588 EXIT         210      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   212     5597 BATINCLUDE   209     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   213     5635 EXIT         212      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   214     5644 BATINCLUDE   209     191  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   215     5682 EXIT         214      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   216     5696 BATINCLUDE   209     205  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   217     5742 EXIT         216      74  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   218     5749 BATINCLUDE   209     212  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   219     5757 EXIT         218      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   220     5765 EXIT         209     220  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   221     6099 GDXIN          1     442  d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\data11\GtapGhg2010.gdx
+   222     6103 BATINCLUDE     1     446  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   223     6163 BATINCLUDE   222     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   224     6201 EXIT         223      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   225     6210 BATINCLUDE   222     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   226     6248 EXIT         225      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   227     6262 BATINCLUDE   222     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   228     6307 EXIT         227      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   229     6314 BATINCLUDE   222     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   230     6322 EXIT         229      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   231     6328 EXIT         222     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   232     6331 BATINCLUDE     1     449  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   233     6391 BATINCLUDE   232     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   234     6429 EXIT         233      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   235     6438 BATINCLUDE   232     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   236     6476 EXIT         235      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   237     6490 BATINCLUDE   232     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   238     6535 EXIT         237      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   239     6542 BATINCLUDE   232     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   240     6550 EXIT         239      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   241     6556 EXIT         232     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   242     6559 BATINCLUDE     1     452  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   243     6619 BATINCLUDE   242     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   244     6657 EXIT         243      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   245     6666 BATINCLUDE   242     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   246     6704 EXIT         245      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   247     6718 BATINCLUDE   242     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   248     6763 EXIT         247      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   249     6770 BATINCLUDE   242     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   250     6778 EXIT         249      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   251     6784 EXIT         242     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   252     6787 BATINCLUDE     1     455  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   253     6847 BATINCLUDE   252     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   254     6885 EXIT         253      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   255     6894 BATINCLUDE   252     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 35
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+   256     6932 EXIT         255      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   257     6946 BATINCLUDE   252     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   258     6991 EXIT         257      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   259     6998 BATINCLUDE   252     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   260     7006 EXIT         259      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   261     7012 EXIT         252     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   262     7015 BATINCLUDE     1     458  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   263     7075 BATINCLUDE   262     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   264     7113 EXIT         263      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   265     7122 BATINCLUDE   262     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   266     7160 EXIT         265      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   267     7174 BATINCLUDE   262     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   268     7219 EXIT         267      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   269     7226 BATINCLUDE   262     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   270     7234 EXIT         269      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   271     7240 EXIT         262     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   272     7242 BATINCLUDE     1     460  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   273     7302 BATINCLUDE   272     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   274     7340 EXIT         273      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   275     7349 BATINCLUDE   272     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   276     7387 EXIT         275      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   277     7401 BATINCLUDE   272     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   278     7446 EXIT         277      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   279     7453 BATINCLUDE   272     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   280     7461 EXIT         279      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   281     7467 EXIT         272     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   282     7470 BATINCLUDE     1     463  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   283     7530 BATINCLUDE   282     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   284     7568 EXIT         283      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   285     7577 BATINCLUDE   282     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   286     7615 EXIT         285      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   287     7629 BATINCLUDE   282     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   288     7674 EXIT         287      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   289     7681 BATINCLUDE   282     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   290     7689 EXIT         289      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   291     7695 EXIT         282     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   292     7698 BATINCLUDE     1     466  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   293     7758 BATINCLUDE   292     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   294     7796 EXIT         293      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   295     7805 BATINCLUDE   292     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   296     7843 EXIT         295      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   297     7857 BATINCLUDE   292     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   298     7902 EXIT         297      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   299     7909 BATINCLUDE   292     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   300     7917 EXIT         299      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   301     7923 EXIT         292     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   302     7925 BATINCLUDE     1     468  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   303     7985 BATINCLUDE   302     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   304     8023 EXIT         303      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   305     8032 BATINCLUDE   302     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   306     8070 EXIT         305      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 36
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+   307     8084 BATINCLUDE   302     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   308     8129 EXIT         307      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   309     8136 BATINCLUDE   302     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   310     8144 EXIT         309      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   311     8150 EXIT         302     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   312     8153 BATINCLUDE     1     471  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   313     8213 BATINCLUDE   312     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   314     8251 EXIT         313      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   315     8260 BATINCLUDE   312     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   316     8298 EXIT         315      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   317     8312 BATINCLUDE   312     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   318     8357 EXIT         317      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   319     8364 BATINCLUDE   312     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   320     8372 EXIT         319      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   321     8378 EXIT         312     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   322     8380 BATINCLUDE     1     473  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   323     8440 BATINCLUDE   322     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   324     8478 EXIT         323      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   325     8487 BATINCLUDE   322     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   326     8525 EXIT         325      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   327     8539 BATINCLUDE   322     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   328     8584 EXIT         327      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   329     8591 BATINCLUDE   322     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   330     8599 EXIT         329      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   331     8605 EXIT         322     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   332     8607 BATINCLUDE     1     475  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   333     8667 BATINCLUDE   332     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   334     8705 EXIT         333      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   335     8714 BATINCLUDE   332     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   336     8752 EXIT         335      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   337     8766 BATINCLUDE   332     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   338     8811 EXIT         337      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   339     8818 BATINCLUDE   332     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   340     8826 EXIT         339      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   341     8832 EXIT         332     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   342     8835 BATINCLUDE     1     478  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   343     8895 BATINCLUDE   342     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   344     8933 EXIT         343      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   345     8942 BATINCLUDE   342     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   346     8980 EXIT         345      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   347     8994 BATINCLUDE   342     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   348     9039 EXIT         347      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   349     9046 BATINCLUDE   342     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   350     9054 EXIT         349      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   351     9060 EXIT         342     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   352     9062 BATINCLUDE     1     480  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   353     9122 BATINCLUDE   352     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   354     9160 EXIT         353      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   355     9169 BATINCLUDE   352     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   356     9207 EXIT         355      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   357     9221 BATINCLUDE   352     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 37
+GAMS Code to Read a GTAP 9 Dataset
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+   358     9266 EXIT         357      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   359     9273 BATINCLUDE   352     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   360     9281 EXIT         359      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   361     9287 EXIT         352     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   362     9289 BATINCLUDE     1     482  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   363     9349 BATINCLUDE   362     125  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   364     9387 EXIT         363      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   365     9396 BATINCLUDE   362     158  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   366     9434 EXIT         365      82  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\checkset.gms
+   367     9448 BATINCLUDE   362     172  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   368     9493 EXIT         367      63  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\domain.gms
+   369     9500 BATINCLUDE   362     179  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   370     9508 EXIT         369      18  ..d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\chktarget.gms
+   371     9514 EXIT         362     185  .d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggr.gms
+   372     9629 EXIT           1     597  d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\gtapaggr.gms
+
+
+COMPILATION TIME     =        0.655 SECONDS     85 MB  24.6.1 r55820 WEX-WEI
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 38
+GAMS Code to Read a GTAP 9 Dataset
+E x e c u t i o n
+
+
+----     40 SET r  Regions
+
+isr,    omn,    AUS,    NZL,    XOC,    CHN,    HKG,    JPN,    KOR,    MNG,    TWN,    XEA,    BRN,    KHM,    IDN,    LAO,    MYS,    PHL,    SGP,    THA,    VNM,    XSE,    BGD,    IND,    NPL,    PAK,    LKA,    XSA,    CAN,    USA,    MEX,    XNA
+ARG,    BOL,    BRA,    CHL,    COL,    ECU,    PRY,    PER,    URY,    VEN,    XSM,    CRI,    GTM,    HND,    NIC,    PAN,    SLV,    XCA,    DOM,    JAM,    PRI,    TTO,    XCB,    AUT,    BEL,    CYP,    CZE,    DNK,    EST,    FIN,    FRA,    DEU
+GRC,    HUN,    IRL,    ITA,    LVA,    LTU,    LUX,    MLT,    NLD,    POL,    PRT,    SVK,    SVN,    ESP,    SWE,    GBR,    CHE,    NOR,    XEF,    ALB,    BGR,    BLR,    HRV,    ROU,    RUS,    UKR,    XEE,    XER,    KAZ,    KGZ,    XSU,    ARM
+AZE,    GEO,    BHR,    IRN,    JOR,    KWT,    QAT,    SAU,    TUR,    ARE,    XWS,    EGY,    MAR,    TUN,    XNF,    BEN,    BFA,    CMR,    CIV,    GHA,    GIN,    NGA,    SEN,    TGO,    XWF,    XCF,    XAC,    ETH,    KEN,    MDG,    MWI,    MUS
+MOZ,    RWA,    TZA,    UGA,    ZMB,    ZWE,    XEC,    BWA,    NAM,    ZAF,    XSC,    XTW
+
+
+----    164 PARAMETER vb  Current account balance
+
+isr          4.983,    omn        -20.114,    AUS        -23.106,    NZL         -4.158,    XOC         12.652,    CHN       -298.323,    HKG        -10.552,    JPN         13.708,    KOR        -22.775,    MNG          0.678,    TWN        -76.873
+XEA         -5.385,    BRN         -4.433,    KHM          0.952,    IDN         -7.290,    LAO          0.821,    MYS        -30.218,    PHL         19.089,    SGP        -63.614,    THA         -6.940,    VNM         24.347,    XSE          3.407
+BGD          6.429,    IND        154.096,    NPL          4.238,    PAK         25.918,    LKA         10.295,    XSA          8.750,    CAN         -4.884,    USA        796.556,    MEX        -30.133,    XNA          2.392,    ARG        -13.610
+BOL          0.812,    BRA         -6.849,    CHL        -13.129,    COL          1.629,    ECU          2.313,    PRY          1.841,    PER         -9.429,    URY          1.213,    VEN        -28.087,    XSM          0.401,    CRI         -3.831
+GTM          3.912,    HND          0.972,    NIC          0.655,    PAN         18.071,    SLV          4.270,    XCA         -0.265,    DOM          4.973,    JAM          3.108,    PRI          5.589,    TTO         -9.355,    XCB         12.955
+AUT         -8.957,    BEL         39.356,    CYP          3.926,    CZE         -9.620,    DNK        -17.155,    EST          1.846,    FIN          6.316,    FRA         86.639,    DEU       -157.097,    GRC         45.366,    HUN         -7.375
+IRL        -81.830,    ITA         67.139,    LVA          4.692,    LTU          6.661,    LUX          8.302,    MLT          5.267,    NLD        -67.847,    POL         28.334,    PRT         12.240,    SVK          1.922,    SVN          2.552
+ESP         50.045,    SWE        -29.198,    GBR        150.311,    CHE        -50.547,    NOR        -70.216,    XEF          1.265,    ALB          3.336,    BGR          5.545,    BLR         10.674,    HRV          1.726,    ROU         12.892
+RUS       -194.517,    UKR         15.049,    XEE          3.621,    XER         12.241,    KAZ        -35.387,    KGZ          6.027,    XSU         -7.166,    ARM          2.150,    AZE        -19.829,    GEO          4.905,    BHR         -3.154
+IRN        -71.404,    JOR         11.973,    KWT        -80.992,    QAT        -73.042,    SAU       -193.551,    TUR         77.927,    ARE         24.963,    XWS        -20.469,    EGY         23.359,    MAR         15.787,    TUN          3.176
+XNF        -13.245,    BEN          6.491,    BFA         -1.133,    CMR          1.125,    CIV         -2.290,    GHA          6.762,    GIN          1.529,    NGA        -24.742,    SEN          4.057,    TGO          2.517,    XWF         17.022
+XCF        -14.422,    XAC        -26.504,    ETH          4.826,    KEN          7.602,    MDG          0.255,    MWI          0.452,    MUS          1.953,    MOZ          1.434,    RWA          0.148,    TZA          4.323,    UGA          0.491
+ZMB         -3.094,    ZWE          3.413,    XEC          2.091,    BWA         -2.450,    NAM         -1.566,    ZAF          7.076,    XSC         -0.965,    XTW         -0.002,    chksum -2.1886E-10
+
+
+----    170 SET mf  Mobile primary factors
+
+tech_aspros ,    clerks      ,    service_shop,    off_mgr_pros,    ag_othlowsk ,    Capital     
+
+
+----    170 SET sf  Sluggish primary factors (sector-specific)
+
+Land   ,    NatlRes
+
+
+----    177 PARAMETER mprofit  Zero profit for m
+
+                      ( ALL       0.000 )
+
+
+----    185 PARAMETER yprofit  Zero profit for y
+
+                      ( ALL       0.000 )
+
+
+----    191 SET rnum  Numeraire region
+
+USA
+
+GAMS 24.6.1  r55820 Released Jan 18, 2016 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                10/13/16 12:41:02 Page 39
+GAMS Code to Read a GTAP 9 Dataset
+E x e c u t i o n
+
+
+----   5776 PARAMETER profit  
+
+             CHN         JPN         KOR         TWN         IND         CAN         USA         MEX         BRA         RUS         LAM         EUR         ROE         ASI         REA         ANZ         MES         AFR         IDZ
+
+dwe  5.68434E-14 -1.1369E-13 -2.8422E-14 -1.4211E-14                         4.54747E-13                         -3.1086E-15 -4.8601E-12 -2.7285E-12 -4.1744E-13 -1.5632E-13 -1.5454E-12 -3.6948E-13 -3.6948E-13 -4.6256E-12
+oil  -4.2633E-14                                     -7.1054E-15             8.52651E-14 -3.5527E-15 -7.1054E-15 8.52651E-14 -6.8354E-12 -8.3844E-13 -2.2453E-12 -4.5475E-13 -1.2932E-12 -3.1974E-13 -2.2737E-13 -1.3102E-11 -7.1054E-15
+gas              -5.5511E-15 -1.0686E-15 -5.2527E-15             -5.3291E-15             -1.7764E-15 -1.7764E-15 1.42109E-14 -4.7002E-12 -1.1440E-12 -2.6539E-12 -1.8119E-13 -7.3896E-13 -3.1797E-13 -4.2633E-13 -2.7576E-11
+c    5.96856E-13 -3.9790E-13 -5.6843E-14 -3.5527E-14 -2.1316E-13 -8.5265E-14 4.66116E-12 -8.5265E-14 -5.7554E-13 -8.5265E-14 -1.9895E-13 5.91172E-12 2.84217E-14 -2.8422E-13 1.42109E-13 -1.7053E-13             -2.2737E-13 -9.2371E-14
+g    2.27374E-13 -5.6977E-13 5.95552E-14 -1.6125E-14 7.99361E-15 1.82243E-13 -2.5513E-13 5.95080E-14 -1.2257E-13 5.50671E-14 1.91847E-13 -1.0232E-12 -3.9080E-14 7.81597E-14 2.66454E-15 -6.1284E-14 1.27898E-13 2.39808E-13 -1.3212E-14
+i    5.11591E-13 -2.2737E-13 -1.2790E-13 2.84217E-14 -5.6843E-14 -2.8422E-14 5.68434E-14 1.42109E-14 3.55271E-14 7.10543E-14 8.52651E-14 1.25056E-12 -2.8422E-14 -1.4211E-14 -6.3949E-14 7.10543E-14 -4.2633E-14 5.68434E-14 4.26326E-14
+CROP 1.13687E-13 -4.2633E-14 -3.5527E-14 -3.0198E-14 -5.6843E-14 -3.5527E-15 -9.9476E-14 -7.1054E-15 -4.2633E-14 -7.1054E-15 -1.0756E-10 -9.5781E-12 -1.1468E-11 -1.0445E-12 -1.2122E-11 -1.9078E-12 -1.4495E-12 -1.8656E-10
+LIVE -1.1369E-13 -5.3291E-14 -3.1086E-14 -3.4639E-14             -4.4409E-15 7.10543E-15 -5.3291E-15 -2.1316E-14 5.32907E-15 -8.3823E-11 -9.5497E-12 -9.0417E-12 -7.1054E-13 -9.3294E-12 -1.8865E-12 -1.2577E-12 -1.1924E-10 -1.0658E-14
+FORS -2.8422E-14 -6.2172E-15 -2.4425E-15 -6.5226E-16 -7.1054E-15 -7.1054E-15             -2.6645E-15 -2.6645E-15             -1.4316E-11 -2.3945E-12 -1.3416E-12 -8.9706E-14 -1.3785E-12 -3.4017E-13 -1.5832E-13 -2.3588E-11 3.55271E-15
+COAL                         -2.0400E-15             -2.6645E-15             2.13163E-14 -8.3267E-16 -1.5266E-16 3.55271E-15 -1.2577E-12 -9.9121E-13 -1.3962E-12 -4.3299E-14 -7.4962E-13 -1.3500E-13 -2.0262E-15 -4.9321E-12
+EINT 1.36424E-12 -3.4106E-13 -1.7053E-13 -5.6843E-14             7.10543E-14 1.13687E-13 -4.2633E-14             8.52651E-14 -5.3717E-11 -9.3223E-12 -6.5796E-12 -8.5265E-13 -2.1458E-12 -1.2221E-12 -1.8190E-12 -8.8775E-11 -4.2633E-14
+OTHR -2.2737E-13 1.13687E-13 -3.6948E-13 -1.4211E-14 -3.9790E-13 -2.8422E-14 4.54747E-13 -8.5265E-14 -2.8422E-13 -1.1369E-13 -1.1158E-10 -2.6375E-11 -1.4296E-11 -1.9895E-12 -1.1880E-11 -2.6432E-12 -3.4106E-12 -2.1294E-10 -5.6843E-14
+SERV -4.5475E-13 9.09495E-13 -4.5475E-13 -5.6843E-14 -2.2737E-13 1.13687E-13 3.63798E-12 1.13687E-13             -2.2737E-13 -7.3101E-11 -1.8190E-11 -1.1482E-11 -2.0464E-12 -7.8728E-12 -1.8190E-12 -3.4106E-12 -1.1482E-10 5.68434E-14
+TRAN             -1.1369E-13 -5.6843E-14 -1.0658E-14 5.68434E-14 -4.2633E-14 2.27374E-13 -1.4211E-14 2.84217E-14 -2.8422E-14 -1.2037E-11 -2.7285E-12 -3.7090E-12 -2.1316E-13 -1.7479E-12 -6.8212E-13 -7.3896E-13 -1.7096E-11 1.77636E-14
+FOOD -3.1264E-13 -1.2790E-13 -7.8160E-14 -7.7272E-14 -3.5527E-14 -7.1054E-15 2.27374E-13 -7.1054E-15 1.42109E-14 -2.8422E-14 -1.6836E-10 -2.2283E-11 -1.4921E-11 -1.9611E-12 -1.8538E-11 -2.5366E-12 -2.6290E-12 -2.3300E-10
+ROIL 2.13163E-13 -3.1619E-13 1.59872E-14 -2.2204E-14 -1.0658E-14 6.75016E-14 -3.7303E-13 1.77636E-14 -6.2172E-15 1.40332E-13 -7.3008E-13 -2.0499E-12 -1.9869E-12 -4.9738E-13 -5.5422E-13 -2.3093E-13 -5.1159E-13 -4.3885E-12 1.42109E-14
+ELEC -5.6843E-14 1.42109E-14 -1.0658E-14 8.88178E-16 7.10543E-15             -5.6843E-14 2.66454E-15             -1.0658E-14 -3.7552E-12 -1.9895E-12 -1.8332E-12 -7.4607E-14 -2.3981E-13 -5.6843E-14 -1.2257E-13 -6.5707E-12 8.65974E-15
+
+
+**** REPORT FILE SUMMARY
+
+ktitle d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\ktitle.put
+
+
+EXECUTION TIME       =       19.703 SECONDS    293 MB  24.6.1 r55820 WEX-WEI
+
+
+USER: Shih-Mo Lin                                    H160307:0527AO-WIN
+      Chung Yuan Christian University, Dept. of International TrDC10738
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\gtapaggr.gms
+Output     d:\mit_hc\eppatw_hc\eppa-g201608\gtap9ingams\gtap9_201610\gtap9\build\aggrtest.lst
